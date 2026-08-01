@@ -1,0 +1,537 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Video Editor UI</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+     <script src="https://unpkg.com/dexie@latest/dist/dexie.js"></script>
+    <script src="/db.js" defer></script>
+    <script src="/main.js" defer></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        /* Custom Resets & Utilities */
+        :root {
+            --light-black: #1a1a1a;
+            --panel-bg: #242424;
+            --element-bg: #2e2e2e;
+            --smoke-white: #f5f5f5;
+            --smoke-muted: #a3a3a3;
+        }
+        
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--light-black);
+            color: var(--smoke-white);
+            overflow: hidden;
+            font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            /* Explicitly disable shadows everywhere to meet strict constraints */
+            * { box-shadow: none !important; }
+        }
+
+        /* Hide scrollbars for clean UI */
+        ::-webkit-scrollbar { width: 0px; height: 0px; }
+        * { scrollbar-width: none; }
+
+        .lucide {
+            width: 20px;
+            height: 20px;
+            stroke-width: 1.5;
+        }
+
+        .icon-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 36px;
+            height: 36px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .icon-btn:hover {
+            background-color: var(--element-bg);
+        }
+
+        .icon-btn.active {
+            background-color: var(--element-bg);
+            border: 1px solid var(--smoke-white);
+        }
+
+        /* Prevent touch actions on canvas to allow smooth dragging on mobile */
+        #timeline-canvas-container {
+            touch-action: none;
+        }
+    </style>
+</head>
+<body class="w-[100svw] h-[100svh] flex flex-col select-none">
+
+    <!-- Top Navigation / Header -->
+    <header class="h-12 w-full bg-[#1a1a1a] border-b border-[#333333] flex items-center justify-between px-4 shrink-0">
+        <div class="flex items-center gap-4">
+            <i data-lucide="video" class="text-[#f5f5f5]"></i>
+        </div>
+        
+        <div class="flex items-center gap-2">
+            <!-- Fullscreen Toggle -->
+            <div class="icon-btn" id="fullscreen-btn"><i data-lucide="maximize"></i></div>
+            <div class="w-px h-6 bg-[#333333] mx-2"></div>
+            <!-- Actions -->
+            <div class="icon-btn"><i data-lucide="settings"></i></div>
+            <div class="icon-btn"><i data-lucide="folder-open"></i></div>
+            <div class="icon-btn"><i data-lucide="download"></i></div>
+            <div class="icon-btn bg-[#f5f5f5] text-[#1a1a1a] hover:bg-[#d4d4d4]">
+                <i data-lucide="share" class="stroke-[2]"></i>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Workspace -->
+    <main class="flex-1 flex flex-col md:flex-row min-h-0 overflow-hidden">
+        
+        <!-- Left Panel: Media Bin (Hidden on Portrait Mobile) -->
+        <aside class="hidden md:flex w-64 bg-[#242424] border-r border-[#333333] flex-col shrink-0">
+            <div class="h-10 border-b border-[#333333] flex items-center px-4 justify-between text-[#a3a3a3] text-xs font-semibold uppercase tracking-wider">
+                <i data-lucide="layout-grid" class="w-4 h-4"></i>
+                <div class="flex gap-2">
+                    <i data-lucide="plus" class="w-4 h-4 cursor-pointer hover:text-[#f5f5f5]" id="addNewMediaButton"></i>
+                    <i data-lucide="search" class="w-4 h-4 cursor-pointer hover:text-[#f5f5f5]"></i>
+                </div>
+            </div>
+            <div class="p-2 grid grid-cols-2 gap-2 overflow-y-auto" id="mediaItemContainer">
+
+            </div>
+        </aside>
+
+        <!-- Center: Video Preview -->
+        <section class="flex-1 bg-[#1a1a1a] flex flex-col relative border-b border-[#333333] md:border-b-0 min-w-0 min-h-0">
+            <!-- Video Player Area -->
+            <div class="flex-1 p-2 md:p-6 flex items-center justify-center min-h-0 overflow-hidden">
+                <div class="aspect-video h-full max-w-full bg-[#0a0a0a] border border-[#333333] flex items-center justify-center relative overflow-hidden">
+                    <span class="text-[#333333] font-mono text-sm tracking-widest uppercase">Preview</span>
+                    <!-- Safe Area Guides Mockup -->
+                    <div class="absolute inset-[10%] border border-[#333333] opacity-50 pointer-events-none"></div>
+                </div>
+            </div>
+            
+            <!-- Player Controls -->
+            <div class="h-12 bg-[#242424] border-t border-[#333333] flex items-center justify-between px-4 shrink-0">
+                <div class="text-xs font-mono text-[#a3a3a3]">00:01:23:14</div>
+                <div class="flex items-center gap-3">
+                    <i data-lucide="skip-back" class="w-5 h-5 cursor-pointer text-[#a3a3a3] hover:text-[#f5f5f5]"></i>
+                    <i data-lucide="play" class="w-6 h-6 cursor-pointer text-[#f5f5f5]"></i>
+                    <i data-lucide="skip-forward" class="w-5 h-5 cursor-pointer text-[#a3a3a3] hover:text-[#f5f5f5]"></i>
+                </div>
+                <div class="text-xs font-mono text-[#a3a3a3]">00:05:00:00</div>
+            </div>
+        </section>
+
+        <!-- Right Panel: Properties (Hidden on Portrait Mobile) -->
+        <aside class="hidden md:flex w-72 bg-[#242424] border-l border-[#333333] flex-col shrink-0">
+            <div class="h-10 border-b border-[#333333] flex items-center px-4 gap-4 text-[#a3a3a3] text-xs font-semibold uppercase tracking-wider">
+                <div class="text-[#f5f5f5] cursor-pointer"><i data-lucide="sliders-horizontal" class="w-4 h-4"></i></div>
+                <div class="cursor-pointer hover:text-[#f5f5f5]"><i data-lucide="type" class="w-4 h-4"></i></div>
+                <div class="cursor-pointer hover:text-[#f5f5f5]"><i data-lucide="sparkles" class="w-4 h-4"></i></div>
+            </div>
+            <div class="flex-1 p-4 flex flex-col gap-6 overflow-y-auto">
+                <!-- Mock Properties -->
+                <div class="space-y-3">
+                    <div class="flex justify-between items-center text-xs text-[#a3a3a3]">
+                        <i data-lucide="move" class="w-4 h-4"></i>
+                        <span class="font-mono">100, 100</span>
+                    </div>
+                    <div class="w-full h-1 bg-[#1a1a1a] rounded">
+                        <div class="w-1/2 h-full bg-[#a3a3a3] rounded"></div>
+                    </div>
+                </div>
+                
+                <div class="space-y-3">
+                    <div class="flex justify-between items-center text-xs text-[#a3a3a3]">
+                        <i data-lucide="scaling" class="w-4 h-4"></i>
+                        <span class="font-mono">100%</span>
+                    </div>
+                    <div class="w-full h-1 bg-[#1a1a1a] rounded">
+                        <div class="w-full h-full bg-[#a3a3a3] rounded"></div>
+                    </div>
+                </div>
+
+                <div class="space-y-3">
+                    <div class="flex justify-between items-center text-xs text-[#a3a3a3]">
+                        <i data-lucide="sun" class="w-4 h-4"></i>
+                        <span class="font-mono">50%</span>
+                    </div>
+                    <div class="w-full h-1 bg-[#1a1a1a] rounded">
+                        <div class="w-1/2 h-full bg-[#a3a3a3] rounded"></div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+    </main>
+
+    <!-- Bottom: Timeline Scrubber Section -->
+    <section class="h-1/3 md:h-[40%] bg-[#242424] border-t border-[#333333] flex flex-col shrink-0 min-h-[200px]">
+        <!-- Timeline Toolbar -->
+        <div class="h-10 bg-[#1a1a1a] border-b border-[#333333] flex items-center px-4 justify-between shrink-0">
+            <div class="flex items-center gap-1">
+                <!-- Tool icons (Hidden on mobile) -->
+                <div class="hidden md:flex items-center gap-1">
+                    <div class="icon-btn active"><i data-lucide="mouse-pointer-2" class="w-4 h-4"></i></div>
+                    <div class="icon-btn"><i data-lucide="scissors" class="w-4 h-4"></i></div>
+                    <div class="icon-btn"><i data-lucide="hand" class="w-4 h-4"></i></div>
+                    <div class="icon-btn"><i data-lucide="pen-tool" class="w-4 h-4"></i></div>
+                    
+                    <div class="w-px h-5 bg-[#333333] mx-1"></div>
+                </div>
+
+                <!-- History (Visible on all devices) -->
+                <div class="icon-btn"><i data-lucide="undo" class="w-4 h-4"></i></div>
+                <div class="icon-btn"><i data-lucide="redo" class="w-4 h-4"></i></div>
+            </div>
+            
+            <div class="flex items-center gap-2">
+                <i data-lucide="zoom-out" class="w-4 h-4 text-[#a3a3a3]"></i>
+                <div class="w-24 h-1 bg-[#1a1a1a] rounded-full overflow-hidden">
+                    <div class="w-1/3 h-full bg-[#a3a3a3]"></div>
+                </div>
+                <i data-lucide="zoom-in" class="w-4 h-4 text-[#a3a3a3]"></i>
+            </div>
+        </div>
+
+        <!-- Canvas Timeline Container -->
+        <div id="timeline-canvas-container" class="flex-1 relative w-full h-full bg-[#1a1a1a] overflow-hidden">
+            <!-- Left Header for tracks -->
+            <div class="absolute left-0 top-0 bottom-0 w-24 bg-[#242424] border-r border-[#333333] z-10 flex flex-col pointer-events-none text-xs text-[#a3a3a3]">
+                <div class="h-8 border-b border-[#333333]"></div> <!-- Time ruler spacer -->
+                <div class="h-16 border-b border-[#333333] flex items-center px-2 justify-between">
+                    <i data-lucide="video" class="w-3 h-3"></i> V2
+                </div>
+                <div class="h-16 border-b border-[#333333] flex items-center px-2 justify-between">
+                    <i data-lucide="video" class="w-3 h-3"></i> V1
+                </div>
+                <div class="h-16 border-b border-[#333333] flex items-center px-2 justify-between">
+                    <i data-lucide="music" class="w-3 h-3"></i> A1
+                </div>
+            </div>
+            <!-- Canvas Object -->
+            <canvas id="timeline-canvas" class="absolute top-0 left-0 w-full h-full cursor-default"></canvas>
+        </div>
+    </section>
+
+    <script>
+        // Initialize Lucide Icons
+        lucide.createIcons();
+
+        // --- Fullscreen API Implementation ---
+        const fullscreenBtn = document.getElementById('fullscreen-btn');
+        const maximizeIcon = '<i data-lucide="maximize"></i>';
+        const minimizeIcon = '<i data-lucide="minimize"></i>';
+
+        fullscreenBtn.addEventListener('click', () => {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(err => {
+                    console.error(`Error attempting to enable fullscreen: ${err.message}`);
+                });
+            } else {
+                document.exitFullscreen();
+            }
+        });
+
+        document.addEventListener('fullscreenchange', () => {
+            if (document.fullscreenElement) {
+                fullscreenBtn.innerHTML = minimizeIcon;
+            } else {
+                fullscreenBtn.innerHTML = maximizeIcon;
+            }
+            lucide.createIcons();
+        });
+
+        // --- High Performance Canvas Timeline Implementation ---
+        const container = document.getElementById('timeline-canvas-container');
+        const canvas = document.getElementById('timeline-canvas');
+        const ctx = canvas.getContext('2d', { alpha: false }); // Optimize for no transparency behind canvas
+
+        // App State
+        const state = {
+            width: 0,
+            height: 0,
+            tracks: 3,
+            trackHeight: 64, // corresponds to 16 rem (h-16)
+            rulerHeight: 32, // corresponds to 8 rem (h-8)
+            offsetX: 96, // width of left panel (w-24)
+            scrollX: 0,
+            isDirty: true,
+            playheadX: 200,
+            
+            // Interaction state
+            dragging: false,
+            action: null, // 'move', 'resize-left', 'resize-right', 'scrub'
+            targetBlock: null,
+            startX: 0,
+            initialBlockX: 0,
+            initialBlockW: 0,
+            
+            // Mock Data
+            blocks: [
+                { id: 1, track: 0, x: 50, w: 200, color: '#3b3b3b', type: 'video' },
+                { id: 2, track: 1, x: 150, w: 300, color: '#2e2e2e', type: 'video' },
+                { id: 3, track: 1, x: 480, w: 150, color: '#2e2e2e', type: 'video' },
+                { id: 4, track: 2, x: 50, w: 400, color: '#242424', type: 'audio' }
+            ]
+        };
+
+        // Resize handler
+        const resizeObserver = new ResizeObserver(entries => {
+            for (let entry of entries) {
+                // Handle high DPI displays for crisp rendering
+                const dpr = window.devicePixelRatio || 1;
+                const rect = entry.contentRect;
+                
+                state.width = rect.width;
+                state.height = rect.height;
+                
+                canvas.width = state.width * dpr;
+                canvas.height = state.height * dpr;
+                
+                ctx.scale(dpr, dpr);
+                state.isDirty = true;
+            }
+        });
+        resizeObserver.observe(container);
+
+        // Core Drawing Loop (uses requestAnimationFrame)
+        function draw() {
+            if (!state.isDirty) {
+                requestAnimationFrame(draw);
+                return;
+            }
+
+            // Background
+            ctx.fillStyle = '#1a1a1a';
+            ctx.fillRect(0, 0, state.width, state.height);
+
+            ctx.save();
+            // Clip to timeline area (ignore left panel)
+            ctx.beginPath();
+            ctx.rect(state.offsetX, 0, state.width - state.offsetX, state.height);
+            ctx.clip();
+
+            // Apply scroll offset
+            ctx.translate(state.offsetX - state.scrollX, 0);
+
+            // Draw Ruler ticks
+            ctx.fillStyle = '#242424';
+            ctx.fillRect(state.scrollX, 0, state.width, state.rulerHeight);
+            
+            ctx.strokeStyle = '#333333';
+            ctx.fillStyle = '#a3a3a3';
+            ctx.font = '10px monospace';
+            ctx.textBaseline = 'top';
+            ctx.lineWidth = 1;
+
+            const tickSpacing = 50;
+            const startTick = Math.floor(state.scrollX / tickSpacing) * tickSpacing;
+            const endTick = state.scrollX + state.width;
+            
+            for (let x = startTick; x < endTick; x += tickSpacing) {
+                ctx.beginPath();
+                if (x % 100 === 0) {
+                    ctx.moveTo(x, 0);
+                    ctx.lineTo(x, state.rulerHeight);
+                    const timeString = `00:00:${Math.floor(x/100).toString().padStart(2, '0')}`;
+                    ctx.fillText(timeString, x + 4, 4);
+                } else {
+                    ctx.moveTo(x, state.rulerHeight - 10);
+                    ctx.lineTo(x, state.rulerHeight);
+                }
+                ctx.stroke();
+            }
+
+            // Draw Tracks grid lines
+            ctx.strokeStyle = '#333333';
+            ctx.beginPath();
+            for (let i = 0; i <= state.tracks; i++) {
+                const y = state.rulerHeight + (i * state.trackHeight);
+                ctx.moveTo(state.scrollX, y);
+                ctx.lineTo(state.scrollX + state.width, y);
+            }
+            ctx.stroke();
+
+            // Draw Blocks
+            for (let block of state.blocks) {
+                const y = state.rulerHeight + (block.track * state.trackHeight) + 4;
+                const h = state.trackHeight - 8;
+                
+                // Block Background
+                ctx.fillStyle = block.color;
+                ctx.fillRect(block.x, y, block.w, h);
+                
+                // Block Border
+                ctx.strokeStyle = (block === state.targetBlock) ? '#f5f5f5' : '#333333';
+                ctx.lineWidth = (block === state.targetBlock) ? 2 : 1;
+                ctx.strokeRect(block.x, y, block.w, h);
+
+                // Resize Handles (if selected)
+                if (block === state.targetBlock) {
+                    ctx.fillStyle = '#f5f5f5';
+                    ctx.fillRect(block.x, y, 4, h); // Left handle
+                    ctx.fillRect(block.x + block.w - 4, y, 4, h); // Right handle
+                }
+                
+                // Label (Mockup wave/thumbnail)
+                if (block.w > 30) {
+                    ctx.fillStyle = '#a3a3a3';
+                    ctx.font = '10px sans-serif';
+                    ctx.fillText(block.type.toUpperCase(), block.x + 8, y + 8);
+                }
+            }
+
+            // Draw Playhead
+            ctx.strokeStyle = '#f5f5f5';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(state.playheadX, 0);
+            ctx.lineTo(state.playheadX, state.height);
+            ctx.stroke();
+
+            // Playhead triangle cap
+            ctx.fillStyle = '#f5f5f5';
+            ctx.beginPath();
+            ctx.moveTo(state.playheadX - 6, 0);
+            ctx.lineTo(state.playheadX + 6, 0);
+            ctx.lineTo(state.playheadX, 10);
+            ctx.fill();
+
+            ctx.restore();
+            
+            // Draw a subtle border separating the left header from the canvas logic
+            ctx.fillStyle = '#333333';
+            ctx.fillRect(state.offsetX, 0, 1, state.height);
+
+            state.isDirty = false;
+            requestAnimationFrame(draw);
+        }
+
+        // Pointer Events (Handles both Mouse and Touch effortlessly)
+        canvas.addEventListener('pointerdown', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            // Get coordinates relative to the canvas coordinate system
+            const x = (e.clientX - rect.left) - state.offsetX + state.scrollX;
+            const y = e.clientY - rect.top;
+
+            // Check if clicking on Ruler (Scrubbing)
+            if (y < state.rulerHeight) {
+                state.dragging = true;
+                state.action = 'scrub';
+                state.playheadX = Math.max(0, x);
+                state.isDirty = true;
+                canvas.setPointerCapture(e.pointerId);
+                return;
+            }
+
+            // Hit detect blocks (reverse order to get top-most visual first)
+            for (let i = state.blocks.length - 1; i >= 0; i--) {
+                const block = state.blocks[i];
+                const by = state.rulerHeight + (block.track * state.trackHeight);
+                
+                if (y >= by && y <= by + state.trackHeight) {
+                    if (x >= block.x - 5 && x <= block.x + block.w + 5) {
+                        state.targetBlock = block;
+                        state.dragging = true;
+                        state.startX = x;
+                        state.initialBlockX = block.x;
+                        state.initialBlockW = block.w;
+                        
+                        // Check if hitting resize handles (left or right 10px)
+                        if (x < block.x + 10) {
+                            state.action = 'resize-left';
+                            canvas.style.cursor = 'ew-resize';
+                        } else if (x > block.x + block.w - 10) {
+                            state.action = 'resize-right';
+                            canvas.style.cursor = 'ew-resize';
+                        } else {
+                            state.action = 'move';
+                            canvas.style.cursor = 'grabbing';
+                        }
+                        
+                        state.isDirty = true;
+                        canvas.setPointerCapture(e.pointerId);
+                        return;
+                    }
+                }
+            }
+
+            // Clicked empty space
+            state.targetBlock = null;
+            state.isDirty = true;
+        });
+
+        canvas.addEventListener('pointermove', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const rawX = e.clientX - rect.left;
+            const x = rawX - state.offsetX + state.scrollX;
+
+            // Handle hover cursors
+            if (!state.dragging) {
+                let cursor = 'default';
+                const y = e.clientY - rect.top;
+                
+                if (y < state.rulerHeight && rawX > state.offsetX) {
+                    cursor = 'text'; // Scrubber pointer
+                } else if (rawX > state.offsetX) {
+                    for (let block of state.blocks) {
+                        const by = state.rulerHeight + (block.track * state.trackHeight);
+                        if (y >= by && y <= by + state.trackHeight) {
+                            if (x >= block.x - 5 && x <= block.x + block.w + 5) {
+                                if (x < block.x + 10 || x > block.x + block.w - 10) {
+                                    cursor = 'ew-resize';
+                                } else {
+                                    cursor = 'grab';
+                                }
+                                break;
+                            }
+                        }
+                    }
+                }
+                canvas.style.cursor = cursor;
+                return;
+            }
+
+            const dx = x - state.startX;
+
+            if (state.action === 'scrub') {
+                state.playheadX = Math.max(0, x);
+            } else if (state.targetBlock) {
+                if (state.action === 'move') {
+                    // Restrict movement to >= 0
+                    state.targetBlock.x = Math.max(0, state.initialBlockX + dx);
+                } else if (state.action === 'resize-right') {
+                    // Minimum block width is 10
+                    state.targetBlock.w = Math.max(10, state.initialBlockW + dx);
+                } else if (state.action === 'resize-left') {
+                    // Prevent pushing left beyond 0 and reversing the block width
+                    const newX = Math.max(0, Math.min(state.initialBlockX + dx, state.initialBlockX + state.initialBlockW - 10));
+                    const widthDiff = state.initialBlockX - newX;
+                    state.targetBlock.x = newX;
+                    state.targetBlock.w = state.initialBlockW + widthDiff;
+                }
+            }
+            state.isDirty = true;
+        });
+
+        canvas.addEventListener('pointerup', (e) => {
+            state.dragging = false;
+            state.action = null;
+            canvas.style.cursor = 'default';
+            canvas.releasePointerCapture(e.pointerId);
+            state.isDirty = true;
+        });
+
+        // Start render loop
+        requestAnimationFrame(draw);
+    </script>
+</body>
+</html>
