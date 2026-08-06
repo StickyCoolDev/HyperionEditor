@@ -1,0 +1,2 @@
+When designing the UI, try to avoid using out-of-place colours and follow the CSS variables inside of index.html.
+ This will help you create a better-looking UI for the app. When adding icons, always and only use Lucid React. 

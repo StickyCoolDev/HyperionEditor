@@ -4,6 +4,56 @@ db.version(1).stores({
   fileBlobs: '++id, fileType, blob'
 });
 
+db.version(2).stores({
+  videoFiles: '++id, name, blobId',
+  fileBlobs: '++id, fileType, blob',
+  settings: 'id'
+});
+
+const DEFAULT_SETTINGS = {
+  id: 'projectSettings',
+  resolutionPreset: '1080p',
+  width: 1920,
+  height: 1080,
+  fps: 30,
+  canvasBg: '#000000',
+  exportFormat: 'mp4',
+  videoCodec: 'h264',
+  compression: 'medium',
+  videoBitrate: 12,
+  audioResolution: '192',
+  audioSampleRate: '48000',
+  exportAudio: true,
+  fastStart: true
+};
+
+/**
+ * Get project & export settings from Dexie IndexedDB
+ */
+async function getSettingsFromDB() {
+  try {
+    const saved = await db.settings.get('projectSettings');
+    return saved ? { ...DEFAULT_SETTINGS, ...saved } : { ...DEFAULT_SETTINGS };
+  } catch (err) {
+    console.error("Error fetching settings from Dexie DB:", err);
+    return { ...DEFAULT_SETTINGS };
+  }
+}
+
+/**
+ * Save project & export settings to Dexie IndexedDB
+ */
+async function saveSettingsToDB(settingsObj) {
+  try {
+    const dataToSave = { ...DEFAULT_SETTINGS, ...settingsObj, id: 'projectSettings' };
+    await db.settings.put(dataToSave);
+    return dataToSave;
+  } catch (err) {
+    console.error("Error saving settings to Dexie DB:", err);
+    throw err;
+  }
+}
+
 /**
  * Save an imported File/Blob into Dexie IndexedDB
  */
