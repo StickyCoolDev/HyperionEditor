@@ -369,6 +369,7 @@ function initSettingsModal() {
     if (fastStartCheckbox) fastStartCheckbox.checked = settings.fastStart !== false;
 
     updatePresetButtonStyles();
+    window.dispatchEvent(new CustomEvent('settingsChanged', { detail: settings }));
   }
 
   // Save Settings
@@ -394,6 +395,7 @@ function initSettingsModal() {
 
       try {
         await saveSettingsToDB(settingsToSave);
+        window.dispatchEvent(new CustomEvent('settingsChanged', { detail: settingsToSave }));
         const saveBtnText = document.getElementById('save-btn-text');
         if (saveBtnText) saveBtnText.textContent = 'Saved!';
         setTimeout(() => {
@@ -409,7 +411,8 @@ function initSettingsModal() {
   // Reset Defaults
   if (resetSettingsBtn) {
     resetSettingsBtn.addEventListener('click', async () => {
-      await saveSettingsToDB(DEFAULT_SETTINGS);
+      const resetData = await saveSettingsToDB(DEFAULT_SETTINGS);
+      window.dispatchEvent(new CustomEvent('settingsChanged', { detail: resetData }));
       await loadSettingsIntoUI();
     });
   }

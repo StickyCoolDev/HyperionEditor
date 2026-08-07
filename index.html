@@ -9,6 +9,7 @@
     <!-- Lucide Icons -->
      <script src="https://unpkg.com/dexie@latest/dist/dexie.js"></script>
     <script src="/db.js" defer></script>
+    <script src="/vfx.js" defer></script>
     <script src="/main.js" defer></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
@@ -110,9 +111,9 @@
         <!-- Center: Video Preview -->
         <section class="flex-1 bg-[#1a1a1a] flex flex-col relative border-b border-[#333333] md:border-b-0 min-w-0 min-h-0">
             <!-- Video Player Area -->
-            <div class="flex-1 p-2 md:p-6 flex items-center justify-center min-h-0 overflow-hidden">
-                <div class="aspect-video h-full max-w-full bg-[#0a0a0a] border border-[#333333] flex items-center justify-center relative overflow-hidden">
-                    <canvas id="preview-canvas" class="w-full h-full object-contain pointer-events-none"></canvas>
+            <div id="preview-wrapper" class="flex-1 p-2 md:p-6 flex items-center justify-center min-h-0 overflow-hidden relative">
+                <div id="preview-box" class="bg-[#0a0a0a] border border-[#333333] flex items-center justify-center relative overflow-hidden shadow-xl transition-all duration-75">
+                    <canvas id="preview-canvas" class="w-full h-full block pointer-events-none"></canvas>
                 </div>
             </div>
             
@@ -120,9 +121,15 @@
             <div class="h-12 bg-[#242424] border-t border-[#333333] flex items-center justify-between px-4 shrink-0">
                 <div id="player-time-current" class="text-xs font-mono text-[#a3a3a3]">00:00:00:00</div>
                 <div class="flex items-center gap-3">
-                    <i id="btn-skip-back" data-lucide="skip-back" class="w-5 h-5 cursor-pointer text-[#a3a3a3] hover:text-[#f5f5f5]"></i>
-                    <i id="btn-play-pause" data-lucide="play" class="w-6 h-6 cursor-pointer text-[#f5f5f5]"></i>
-                    <i id="btn-skip-forward" data-lucide="skip-forward" class="w-5 h-5 cursor-pointer text-[#a3a3a3] hover:text-[#f5f5f5]"></i>
+                    <button id="btn-skip-back" class="p-1 cursor-pointer text-[#a3a3a3] hover:text-[#f5f5f5] transition">
+                        <i data-lucide="skip-back" class="w-5 h-5 pointer-events-none"></i>
+                    </button>
+                    <button id="btn-play-pause" class="p-1 cursor-pointer text-[#f5f5f5] hover:text-white transition">
+                        <i data-lucide="play" class="w-6 h-6 pointer-events-none"></i>
+                    </button>
+                    <button id="btn-skip-forward" class="p-1 cursor-pointer text-[#a3a3a3] hover:text-[#f5f5f5] transition">
+                        <i data-lucide="skip-forward" class="w-5 h-5 pointer-events-none"></i>
+                    </button>
                 </div>
                 <div id="player-time-total" class="text-xs font-mono text-[#a3a3a3]">00:00:00:00</div>
             </div>
@@ -135,37 +142,8 @@
                 <div class="cursor-pointer hover:text-[#f5f5f5]"><i data-lucide="type" class="w-4 h-4"></i></div>
                 <div class="cursor-pointer hover:text-[#f5f5f5]"><i data-lucide="sparkles" class="w-4 h-4"></i></div>
             </div>
-            <div class="flex-1 p-4 flex flex-col gap-6 overflow-y-auto">
-                <!-- Mock Properties -->
-                <div class="space-y-3">
-                    <div class="flex justify-between items-center text-xs text-[#a3a3a3]">
-                        <i data-lucide="move" class="w-4 h-4"></i>
-                        <span class="font-mono">100, 100</span>
-                    </div>
-                    <div class="w-full h-1 bg-[#1a1a1a] rounded">
-                        <div class="w-1/2 h-full bg-[#a3a3a3] rounded"></div>
-                    </div>
-                </div>
-                
-                <div class="space-y-3">
-                    <div class="flex justify-between items-center text-xs text-[#a3a3a3]">
-                        <i data-lucide="scaling" class="w-4 h-4"></i>
-                        <span class="font-mono">100%</span>
-                    </div>
-                    <div class="w-full h-1 bg-[#1a1a1a] rounded">
-                        <div class="w-full h-full bg-[#a3a3a3] rounded"></div>
-                    </div>
-                </div>
-
-                <div class="space-y-3">
-                    <div class="flex justify-between items-center text-xs text-[#a3a3a3]">
-                        <i data-lucide="sun" class="w-4 h-4"></i>
-                        <span class="font-mono">50%</span>
-                    </div>
-                    <div class="w-full h-1 bg-[#1a1a1a] rounded">
-                        <div class="w-1/2 h-full bg-[#a3a3a3] rounded"></div>
-                    </div>
-                </div>
+            <div id="properties-panel-content" class="flex-1 p-4 flex flex-col gap-6 overflow-y-auto">
+                <div class="text-xs text-[#a3a3a3] text-center mt-4">Select a clip to view properties.</div>
             </div>
         </aside>
     </main>
@@ -236,6 +214,10 @@
             <i data-lucide="plus-circle" class="w-3.5 h-3.5 text-[#a3a3a3]"></i>
             <span>Add Track Below</span>
         </button>
+        <button type="button" id="track-menu-add-vfx-track" class="flex items-center gap-2 px-2.5 py-1.5 rounded bg-[#2e2e2e] hover:bg-[#383838] text-[#f5f5f5] transition-colors text-left font-medium cursor-pointer">
+            <i data-lucide="sparkles" class="w-3.5 h-3.5 text-[#a3a3a3]"></i>
+            <span>Add VFX Track</span>
+        </button>
         <div class="h-px bg-[#333333] my-0.5"></div>
         <button type="button" id="track-menu-delete" class="flex items-center gap-2 px-2.5 py-1.5 rounded bg-[#242424] hover:bg-[#1a1a1a] text-red-500 border border-[#333333] transition-colors text-left font-medium cursor-pointer">
             <i data-lucide="trash-2" class="w-3.5 h-3.5 text-red-500"></i>
@@ -247,6 +229,23 @@
     <div id="add-media-popup" class="hidden fixed z-50 bg-[#242424] border border-[#f5f5f5] rounded-lg px-3.5 py-2 shadow-2xl flex items-center gap-2 cursor-pointer hover:bg-[#2e2e2e] active:scale-95 transition-all select-none text-xs font-semibold text-[#f5f5f5] ring-1 ring-black/50">
         <i data-lucide="plus" class="w-4 h-4 text-emerald-400"></i>
         <span>Add new media</span>
+    </div>
+
+    <!-- Block Delete Confirmation Modal -->
+    <div id="delete-confirmation-modal" class="hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-[#242424] border border-[#333333] rounded-lg shadow-xl w-full max-w-sm overflow-hidden flex flex-col">
+            <div class="p-5 flex flex-col gap-3 text-center">
+                <div class="mx-auto w-10 h-10 rounded-full bg-red-500/10 flex items-center justify-center">
+                    <i data-lucide="trash-2" class="w-5 h-5 text-red-500"></i>
+                </div>
+                <h3 class="text-[#f5f5f5] text-lg font-semibold">Delete Media?</h3>
+                <p class="text-[#a3a3a3] text-sm">Are you sure you want to delete this media? This action can be undone.</p>
+            </div>
+            <div class="p-4 bg-[#1a1a1a] flex justify-end gap-3 border-t border-[#333333]">
+                <button type="button" id="cancel-delete-block-btn" class="px-4 py-2 rounded text-xs font-medium text-[#f5f5f5] hover:bg-[#2e2e2e] transition-colors border border-[#333333]">Cancel</button>
+                <button type="button" id="confirm-delete-block-btn" class="px-4 py-2 rounded text-xs font-medium bg-red-600 hover:bg-red-700 text-white transition-colors">Delete</button>
+            </div>
+        </div>
     </div>
 
     <!-- Media Selector Modal -->
@@ -277,19 +276,27 @@
 
             <!-- Modal Body -->
             <div class="flex-1 p-4 overflow-y-auto space-y-4">
-                <!-- Upload New Media Button -->
-                <div>
-                    <button type="button" id="media-selector-upload-btn" class="w-full h-14 border-2 border-dashed border-[#444444] hover:border-[#f5f5f5] hover:bg-[#2e2e2e] rounded-lg flex items-center justify-center gap-2 text-xs font-medium text-[#a3a3a3] hover:text-[#f5f5f5] transition-all cursor-pointer">
-                        <i data-lucide="upload" class="w-4 h-4 text-emerald-400"></i>
-                        <span>Browse & Upload Media File</span>
-                    </button>
-                </div>
+                <div id="modal-media-section" class="space-y-4">
+                    <!-- Upload New Media Button -->
+                    <div>
+                        <button type="button" id="media-selector-upload-btn" class="w-full h-14 border-2 border-dashed border-[#444444] hover:border-[#f5f5f5] hover:bg-[#2e2e2e] rounded-lg flex items-center justify-center text-[#a3a3a3] hover:text-[#f5f5f5] transition-all cursor-pointer">
+                            <i data-lucide="upload" class="w-6 h-6 text-emerald-400"></i>
+                        </button>
+                    </div>
 
-                <!-- Existing Media Library Grid -->
-                <div>
-                    <label class="text-[11px] font-semibold uppercase tracking-wider text-[#a3a3a3] block mb-2">Project Media Library</label>
-                    <div id="media-selector-grid" class="grid grid-cols-2 sm:grid-cols-3 gap-2.5 max-h-60 overflow-y-auto pr-1">
-                        <!-- Populated dynamically -->
+                    <!-- Existing Media Library Grid -->
+                    <div>
+                        <label class="text-[11px] font-semibold uppercase tracking-wider text-[#a3a3a3] block mb-2">Project Media Library</label>
+                        <div id="media-selector-grid" class="grid grid-cols-2 sm:grid-cols-3 gap-2.5 max-h-60 overflow-y-auto pr-1">
+                            <!-- Populated dynamically -->
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="modal-vfx-section" class="hidden space-y-4">
+                    <label class="text-[11px] font-semibold uppercase tracking-wider text-[#a3a3a3] block mb-2">Available Effects</label>
+                    <div id="vfx-selector-grid" class="grid grid-cols-2 sm:grid-cols-3 gap-2.5 max-h-60 overflow-y-auto pr-1">
+                        <!-- Populated dynamically from VFXEngine -->
                     </div>
                 </div>
             </div>
@@ -335,6 +342,10 @@
         const state = {
             width: 0,
             height: 0,
+            projectWidth: 1920,
+            projectHeight: 1080,
+            canvasBg: '#000000',
+            fps: 30,
             zoom: 1.0,
             tracks: [
                 { id: 't-v2', type: 'video', name: 'V2' },
@@ -362,8 +373,43 @@
             isPlaying: false,
             lastFrameTime: 0,
             
-            blocks: []
+            blocks: [],
+            undoStack: [],
+            redoStack: []
         };
+
+        function saveHistoryState() {
+            // Push a deep copy of blocks to undo stack
+            state.undoStack.push(JSON.parse(JSON.stringify(state.blocks)));
+            // Limit undo stack size if needed (e.g., 50)
+            if (state.undoStack.length > 50) {
+                state.undoStack.shift();
+            }
+            // Clear redo stack on new action
+            state.redoStack = [];
+        }
+
+        function performUndo() {
+            if (state.undoStack.length > 0) {
+                // Save current state to redo stack
+                state.redoStack.push(JSON.parse(JSON.stringify(state.blocks)));
+                // Pop the last state and apply it
+                state.blocks = state.undoStack.pop();
+                state.targetBlock = null;
+                state.isDirty = true;
+            }
+        }
+
+        function performRedo() {
+            if (state.redoStack.length > 0) {
+                // Save current state to undo stack
+                state.undoStack.push(JSON.parse(JSON.stringify(state.blocks)));
+                // Pop the next state and apply it
+                state.blocks = state.redoStack.pop();
+                state.targetBlock = null;
+                state.isDirty = true;
+            }
+        }
 
         // --- Zoom Control & LocalStorage Sync ---
         function updateZoomUI() {
@@ -474,10 +520,20 @@
         }
 
         function showTrackContextMenu(clientX, clientY, trackIndex) {
-            if (trackIndex < 0 || trackIndex >= state.tracks.length) return;
             currentContextTrackIndex = trackIndex;
             const menu = document.getElementById('track-context-menu');
             if (!menu) return;
+
+            const deleteBtn = document.getElementById('track-menu-delete');
+            if (deleteBtn) {
+                if (state.tracks.length === 0 || trackIndex >= state.tracks.length) {
+                    deleteBtn.style.display = 'none';
+                    document.getElementById('track-menu-add-track').querySelector('span').textContent = 'Add Video Track';
+                } else {
+                    deleteBtn.style.display = 'flex';
+                    document.getElementById('track-menu-add-track').querySelector('span').textContent = 'Add Track Below';
+                }
+            }
 
             const menuWidth = 160;
             const menuHeight = 100;
@@ -574,7 +630,7 @@
                 item.setAttribute('data-track-index', index);
                 item.innerHTML = `
                     <div class="flex items-center gap-1.5 pointer-events-none">
-                        <i data-lucide="${track.type === 'video' ? 'video' : 'music'}" class="w-3.5 h-3.5 text-[#a3a3a3]"></i>
+                        <i data-lucide="${track.type === 'video' ? 'video' : (track.type === 'vfx' ? 'sparkles' : 'music')}" class="w-3.5 h-3.5 text-[#a3a3a3]"></i>
                         <span class="font-mono text-xs font-medium text-[#f5f5f5]">${track.name}</span>
                     </div>
                     <div class="text-[10px] text-[#a3a3a3] uppercase pointer-events-none">${track.type}</div>
@@ -591,33 +647,55 @@
 
         // Context Menu Action Listeners
         const addTrackBtn = document.getElementById('track-menu-add-track');
+        const addVfxTrackBtn = document.getElementById('track-menu-add-vfx-track');
         const deleteTrackBtn = document.getElementById('track-menu-delete');
+
+        function createNewTrack(type) {
+            if (currentContextTrackIndex === null || currentContextTrackIndex < 0) currentContextTrackIndex = 0;
+            if (state.tracks.length > 0 && currentContextTrackIndex > state.tracks.length) currentContextTrackIndex = state.tracks.length;
+
+            const newTrack = {
+                id: 'track-' + Date.now(),
+                type: type,
+                name: ''
+            };
+
+            // Let's just add below the current context track, or at 0 if none.
+            let insertIndex = state.tracks.length > 0 ? currentContextTrackIndex + 1 : 0;
+            
+            // If clicking below all tracks, append
+            if (currentContextTrackIndex === state.tracks.length) {
+                insertIndex = state.tracks.length;
+            }
+
+            state.tracks.splice(insertIndex, 0, newTrack);
+
+            state.blocks.forEach(b => {
+                if (b.track >= insertIndex) {
+                    b.track += 1;
+                }
+            });
+
+            updateTrackNames();
+            renderTrackHeaders();
+            hideTrackContextMenu();
+            state.isDirty = true;
+        }
 
         if (addTrackBtn) {
             addTrackBtn.addEventListener('click', () => {
-                if (currentContextTrackIndex === null || currentContextTrackIndex < 0 || currentContextTrackIndex >= state.tracks.length) return;
+                if (currentContextTrackIndex !== null) {
+                    const targetTrack = state.tracks[currentContextTrackIndex];
+                    createNewTrack(targetTrack ? targetTrack.type : 'video');
+                }
+            });
+        }
 
-                const targetTrack = state.tracks[currentContextTrackIndex];
-                const newType = targetTrack ? targetTrack.type : 'video';
-                const newTrack = {
-                    id: 'track-' + Date.now(),
-                    type: newType,
-                    name: ''
-                };
-
-                const insertIndex = currentContextTrackIndex + 1;
-                state.tracks.splice(insertIndex, 0, newTrack);
-
-                state.blocks.forEach(b => {
-                    if (b.track >= insertIndex) {
-                        b.track += 1;
-                    }
-                });
-
-                updateTrackNames();
-                renderTrackHeaders();
-                hideTrackContextMenu();
-                state.isDirty = true;
+        if (addVfxTrackBtn) {
+            addVfxTrackBtn.addEventListener('click', () => {
+                // Usually we want VFX tracks at the top, but we'll let the user place them anywhere.
+                // The renderer will render all VFX blocks ON TOP of all video blocks regardless of track order.
+                createNewTrack('vfx');
             });
         }
 
@@ -663,8 +741,246 @@
         });
         resizeObserver.observe(container);
 
+        function updatePlayPauseUI() {
+            const playBtn = document.getElementById('btn-play-pause');
+            if (playBtn) {
+                playBtn.innerHTML = `<i data-lucide="${state.isPlaying ? 'pause' : 'play'}" class="w-6 h-6 pointer-events-none"></i>`;
+                if (window.lucide) window.lucide.createIcons();
+            }
+        }
+
+        // --- Dynamic Aspect Ratio Preview Box Sizing ---
+        function updatePreviewBoxSize() {
+            const wrapper = document.getElementById('preview-wrapper');
+            const box = document.getElementById('preview-box');
+            if (!wrapper || !box) return;
+
+            const availW = wrapper.clientWidth;
+            const availH = wrapper.clientHeight;
+            if (availW <= 0 || availH <= 0) return;
+
+            const projW = state.projectWidth || 1920;
+            const projH = state.projectHeight || 1080;
+            const targetRatio = projW / projH;
+
+            let finalW, finalH;
+            if (availW / availH > targetRatio) {
+                finalH = availH;
+                finalW = finalH * targetRatio;
+            } else {
+                finalW = availW;
+                finalH = finalW / targetRatio;
+            }
+
+            box.style.width = Math.floor(finalW) + 'px';
+            box.style.height = Math.floor(finalH) + 'px';
+
+            if (previewCanvas) {
+                if (previewCanvas.width !== projW || previewCanvas.height !== projH) {
+                    previewCanvas.width = projW;
+                    previewCanvas.height = projH;
+                }
+            }
+        }
+
+        async function loadProjectSettings() {
+            if (typeof getSettingsFromDB === 'function') {
+                const settings = await getSettingsFromDB();
+                if (settings) {
+                    state.projectWidth = parseInt(settings.width, 10) || 1920;
+                    state.projectHeight = parseInt(settings.height, 10) || 1080;
+                    state.canvasBg = settings.canvasBg || '#000000';
+                    state.fps = parseFloat(settings.fps) || 30;
+                    state.isDirty = true;
+                    updatePreviewBoxSize();
+                }
+            }
+        }
+
+        window.addEventListener('settingsChanged', (e) => {
+            if (e.detail) {
+                state.projectWidth = parseInt(e.detail.width, 10) || 1920;
+                state.projectHeight = parseInt(e.detail.height, 10) || 1080;
+                state.canvasBg = e.detail.canvasBg || '#000000';
+                state.fps = parseFloat(e.detail.fps) || 30;
+                state.isDirty = true;
+                updatePreviewBoxSize();
+            }
+        });
+
+        window.addEventListener('resize', () => {
+            updatePreviewBoxSize();
+            state.isDirty = true;
+        });
+
+        const previewWrapper = document.getElementById('preview-wrapper');
+        if (previewWrapper) {
+            const previewResizeObserver = new ResizeObserver(() => {
+                updatePreviewBoxSize();
+                state.isDirty = true;
+            });
+            previewResizeObserver.observe(previewWrapper);
+        }
+
+        function updatePropertiesPanel(block) {
+            const panel = document.getElementById('properties-panel-content');
+            if (!panel) return;
+
+            if (!block) {
+                panel.innerHTML = '<div class="text-xs text-[#a3a3a3] text-center mt-4">Select a clip to view properties.</div>';
+                return;
+            }
+
+            let html = `<div class="text-sm font-semibold text-[#f5f5f5] mb-2 truncate">${block.name}</div>`;
+            
+            // Basic block info
+            html += `
+                <div class="space-y-3 mb-6 pb-6 border-b border-[#333333]">
+                    <div class="flex justify-between items-center text-xs text-[#a3a3a3]">
+                        <span class="uppercase font-semibold tracking-wider">Type</span>
+                        <span class="font-mono text-[#f5f5f5]">${block.type}</span>
+                    </div>
+                    <div class="flex justify-between items-center text-xs text-[#a3a3a3]">
+                        <span class="uppercase font-semibold tracking-wider">Start</span>
+                        <span id="prop-basic-start" class="font-mono text-[#f5f5f5]">${(block.x / 100).toFixed(2)}s</span>
+                    </div>
+                    <div class="flex justify-between items-center text-xs text-[#a3a3a3]">
+                        <span class="uppercase font-semibold tracking-wider">Duration</span>
+                        <span id="prop-basic-duration" class="font-mono text-[#f5f5f5]">${(block.w / 100).toFixed(2)}s</span>
+                    </div>
+                </div>
+            `;
+
+            // VFX specific properties
+            if (block.type === 'vfx' && block.vfxParams) {
+                const params = block.vfxParams;
+                
+                if (params.type === 'tint') {
+                    html += `
+                        <div class="space-y-3">
+                            <label class="text-[11px] font-semibold uppercase tracking-wider text-[#a3a3a3] block mb-1">Color Tint</label>
+                            <input type="color" id="prop-vfx-tint-color" value="${rgbaToHex(params.color || 'rgba(255,0,0,0.3)')}" class="w-full h-8 cursor-pointer rounded bg-[#1a1a1a] border border-[#333333]">
+                            
+                            <label class="text-[11px] font-semibold uppercase tracking-wider text-[#a3a3a3] block mt-4 mb-1">Opacity</label>
+                            <input type="range" id="prop-vfx-tint-opacity" min="0" max="1" step="0.05" value="${getAlpha(params.color || 'rgba(255,0,0,0.3)')}" class="w-full accent-emerald-500">
+                        </div>
+                    `;
+                } else if (params.type === 'blur') {
+                    html += `
+                        <div class="space-y-3">
+                            <label class="text-[11px] font-semibold uppercase tracking-wider text-[#a3a3a3] block mb-1">Blur Amount (px)</label>
+                            <input type="range" id="prop-vfx-blur" min="0" max="50" step="1" value="${params.amount || 10}" class="w-full accent-emerald-500">
+                        </div>
+                    `;
+                } else if (params.type === 'shake') {
+                    html += `
+                        <div class="space-y-3">
+                            <label class="text-[11px] font-semibold uppercase tracking-wider text-[#a3a3a3] block mb-1">Shake Intensity</label>
+                            <input type="range" id="prop-vfx-shake" min="0" max="100" step="1" value="${params.intensity || 15}" class="w-full accent-emerald-500">
+                        </div>
+                    `;
+                } else if (params.type === 'brightness' || params.type === 'contrast' || params.type === 'grayscale') {
+                    let label = params.type.charAt(0).toUpperCase() + params.type.slice(1);
+                    html += `
+                        <div class="space-y-3">
+                            <label class="text-[11px] font-semibold uppercase tracking-wider text-[#a3a3a3] block mb-1">${label} Amount</label>
+                            <input type="range" id="prop-vfx-${params.type}" min="0" max="3" step="0.1" value="${params.amount || 1}" class="w-full accent-emerald-500">
+                        </div>
+                    `;
+                }
+            }
+
+            panel.innerHTML = html;
+
+            // Add event listeners
+            if (block.type === 'vfx') {
+                let prePropChangeState = null;
+                const savePreState = () => {
+                    if (!prePropChangeState) prePropChangeState = JSON.parse(JSON.stringify(state.blocks));
+                };
+                const commitPropChange = () => {
+                    if (prePropChangeState && JSON.stringify(state.blocks) !== JSON.stringify(prePropChangeState)) {
+                        state.undoStack.push(prePropChangeState);
+                        if (state.undoStack.length > 50) state.undoStack.shift();
+                        state.redoStack = [];
+                    }
+                    prePropChangeState = null;
+                };
+
+                if (block.vfxParams.type === 'tint') {
+                    const colorInput = document.getElementById('prop-vfx-tint-color');
+                    const opacityInput = document.getElementById('prop-vfx-tint-opacity');
+                    if (colorInput && opacityInput) {
+                        const updateColor = () => {
+                            const hex = colorInput.value;
+                            const alpha = opacityInput.value;
+                            block.vfxParams.color = hexToRgba(hex, alpha);
+                            state.isDirty = true;
+                        };
+                        colorInput.addEventListener('pointerdown', savePreState);
+                        colorInput.addEventListener('input', updateColor);
+                        colorInput.addEventListener('change', commitPropChange);
+
+                        opacityInput.addEventListener('pointerdown', savePreState);
+                        opacityInput.addEventListener('input', updateColor);
+                        opacityInput.addEventListener('change', commitPropChange);
+                    }
+                } else {
+                    const rangeInput = document.getElementById(`prop-vfx-${block.vfxParams.type}`);
+                    if (rangeInput) {
+                        rangeInput.addEventListener('pointerdown', savePreState);
+                        rangeInput.addEventListener('input', (e) => {
+                            if (block.vfxParams.type === 'shake') {
+                                block.vfxParams.intensity = parseFloat(e.target.value);
+                            } else {
+                                block.vfxParams.amount = parseFloat(e.target.value);
+                            }
+                            state.isDirty = true;
+                        });
+                        rangeInput.addEventListener('change', commitPropChange);
+                    }
+                }
+            }
+        }
+
+        // Helper color functions for tint
+        function rgbaToHex(rgbaStr) {
+            const match = rgbaStr.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/);
+            if (!match) return '#ff0000';
+            const r = parseInt(match[1]).toString(16).padStart(2, '0');
+            const g = parseInt(match[2]).toString(16).padStart(2, '0');
+            const b = parseInt(match[3]).toString(16).padStart(2, '0');
+            return `#${r}${g}${b}`;
+        }
+        function getAlpha(rgbaStr) {
+            const match = rgbaStr.match(/rgba?\((\d+),\s*(\d+),\s*(\d+),\s*([0-9.]+)\)/);
+            if (!match) return 1;
+            return parseFloat(match[4]);
+        }
+        function hexToRgba(hex, alpha) {
+            let r = parseInt(hex.slice(1, 3), 16);
+            let g = parseInt(hex.slice(3, 5), 16);
+            let b = parseInt(hex.slice(5, 7), 16);
+            return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+        }
+
+        let lastTargetBlock = null;
+
         // Core Drawing Loop (uses requestAnimationFrame)
         function draw(timestamp) {
+            if (lastTargetBlock !== state.targetBlock) {
+                lastTargetBlock = state.targetBlock;
+                if (typeof updatePropertiesPanel === 'function') {
+                    updatePropertiesPanel(state.targetBlock);
+                }
+            } else if (state.targetBlock) {
+                // Live update position/duration without re-rendering everything
+                const startEl = document.getElementById('prop-basic-start');
+                const durEl = document.getElementById('prop-basic-duration');
+                if (startEl) startEl.textContent = (state.targetBlock.x / 100).toFixed(2) + 's';
+                if (durEl) durEl.textContent = (state.targetBlock.w / 100).toFixed(2) + 's';
+            }
+
             if (!state.lastFrameTime) state.lastFrameTime = timestamp;
             const deltaTime = timestamp - state.lastFrameTime;
             state.lastFrameTime = timestamp;
@@ -683,8 +999,7 @@
                 
                 if (state.playheadX > maxBlockEnd + 100 && state.blocks.length > 0) {
                     state.isPlaying = false;
-                    document.getElementById('btn-play-pause').setAttribute('data-lucide', 'play');
-                    lucide.createIcons();
+                    updatePlayPauseUI();
                 }
 
                 state.isDirty = true;
@@ -707,44 +1022,47 @@
 
             // Render Preview
             if (previewCanvas && previewCtx) {
-                // Match resolution
-                if (previewCanvas.width !== previewCanvas.clientWidth || previewCanvas.height !== previewCanvas.clientHeight) {
-                    previewCanvas.width = previewCanvas.clientWidth;
-                    previewCanvas.height = previewCanvas.clientHeight;
-                }
+                updatePreviewBoxSize();
                 
-                previewCtx.clearRect(0, 0, previewCanvas.width, previewCanvas.height);
+                previewCtx.fillStyle = state.canvasBg || '#000000';
+                previewCtx.fillRect(0, 0, previewCanvas.width, previewCanvas.height);
                 
                 // Find top-most block at playhead
                 let activeVideoImageBlock = null;
                 for (let trackIdx = 0; trackIdx < state.tracks.length; trackIdx++) {
                     const track = state.tracks[trackIdx];
-                    if (track.type !== 'video') continue; // Videos and images are on 'video' tracks
+                    if (track.type !== 'video') continue;
                     
-                    // Find block in this track intersecting playhead
                     const block = state.blocks.find(b => b.track === trackIdx && state.playheadX >= b.x && state.playheadX <= b.x + b.w);
                     if (block && (block.type === 'video' || block.type === 'image')) {
                         activeVideoImageBlock = block;
-                        break; // Found the top-most one (lower index = higher z-order visually if track 0 is top)
+                        break;
                     }
                 }
                 
+                // Find all active VFX blocks
+                const activeVfxBlocks = state.blocks.filter(b => {
+                    const track = state.tracks[b.track];
+                    return track && track.type === 'vfx' && b.type === 'vfx' && state.playheadX >= b.x && state.playheadX <= b.x + b.w;
+                });
+
+                previewCtx.save();
+
+                if (window.VFXEngine && activeVfxBlocks.length > 0) {
+                    window.VFXEngine.preApplyVFX(previewCtx, activeVfxBlocks, previewCanvas.width, previewCanvas.height, state.playheadX);
+                }
+
                 if (activeVideoImageBlock && activeVideoImageBlock.mediaElement) {
                     const media = activeVideoImageBlock.mediaElement;
                     const isVideo = activeVideoImageBlock.type === 'video';
                     
-                    if (isVideo) {
-                        // Calculate relative time within the video
-                        const relativeTime = (state.playheadX - activeVideoImageBlock.x) / 100;
-                        if (Math.abs(media.currentTime - relativeTime) > 0.1 && !state.isPlaying) {
-                            media.currentTime = relativeTime; // Seek
-                        } else if (state.isPlaying && media.paused) {
-                            media.currentTime = relativeTime; // Sync before play
-                            media.play().catch(e => console.warn('Autoplay prevented', e));
+                    if (isVideo && !state.isPlaying) {
+                        const relativeTime = Math.max(0, (state.playheadX - activeVideoImageBlock.x) / 100);
+                        if (Math.abs(media.currentTime - relativeTime) > 0.05) {
+                            media.currentTime = relativeTime;
                         }
                     }
 
-                    // Calculate aspect ratio fit
                     let mediaWidth = isVideo ? media.videoWidth : media.naturalWidth;
                     let mediaHeight = isVideo ? media.videoHeight : media.naturalHeight;
                     
@@ -764,27 +1082,41 @@
                         const drawX = (previewCanvas.width - drawWidth) / 2;
                         const drawY = (previewCanvas.height - drawHeight) / 2;
                         
-                        previewCtx.drawImage(media, drawX, drawY, drawWidth, drawHeight);
+                        try {
+                            previewCtx.drawImage(media, drawX, drawY, drawWidth, drawHeight);
+                        } catch(e) {}
                     }
+                } else if (!activeVideoImageBlock) {
+                    previewCtx.fillStyle = '#666666';
+                    previewCtx.font = `${Math.max(12, Math.round(previewCanvas.height / 32))}px monospace`;
+                    previewCtx.textAlign = 'center';
+                    previewCtx.textBaseline = 'middle';
+                    previewCtx.fillText('NO MEDIA AT PLAYHEAD', previewCanvas.width / 2, previewCanvas.height / 2);
                 }
+
+                if (window.VFXEngine && activeVfxBlocks.length > 0) {
+                    window.VFXEngine.postApplyVFX(previewCtx, activeVfxBlocks, previewCanvas.width, previewCanvas.height, state.playheadX);
+                }
+
+                previewCtx.restore();
                 
-                // Handle audio separately
-                if (state.isPlaying) {
-                    for (let block of state.blocks) {
-                        if (block.type === 'audio' && block.mediaElement) {
-                            if (state.playheadX >= block.x && state.playheadX <= block.x + block.w) {
-                                if (block.mediaElement.paused) {
-                                    block.mediaElement.currentTime = (state.playheadX - block.x) / 100;
-                                    block.mediaElement.play().catch(e => console.warn('Audio play prevented', e));
-                                }
-                            } else {
-                                if (!block.mediaElement.paused) block.mediaElement.pause();
-                            }
+                // Sync playback state for video/audio elements
+                for (let block of state.blocks) {
+                    if (!block.mediaElement || block.type === 'image') continue;
+
+                    let shouldPlay = state.isPlaying && (
+                        (block.type === 'audio' && state.playheadX >= block.x && state.playheadX <= block.x + block.w) ||
+                        (block.type === 'video' && block === activeVideoImageBlock)
+                    );
+
+                    if (shouldPlay) {
+                        if (block.mediaElement.paused) {
+                            const relTime = Math.max(0, (state.playheadX - block.x) / 100);
+                            block.mediaElement.currentTime = relTime;
+                            block.mediaElement.play().catch(() => {});
                         }
-                    }
-                } else {
-                    for (let block of state.blocks) {
-                        if (block.mediaElement && block.type !== 'image' && !block.mediaElement.paused) {
+                    } else {
+                        if (!block.mediaElement.paused) {
                             block.mediaElement.pause();
                         }
                     }
@@ -943,6 +1275,7 @@
         let canvasHoldTimer = null;
         let canvasHoldStartX = 0;
         let canvasHoldStartY = 0;
+        let dragOldState = null;
 
         let emptySpaceHoldTimer = null;
         let emptySpaceHoldStartX = 0;
@@ -953,6 +1286,35 @@
             const popup = document.getElementById('add-media-popup');
             if (popup) popup.classList.add('hidden');
         }
+
+        let pendingDeleteBlock = null;
+
+        function promptDeleteBlock(block) {
+            pendingDeleteBlock = block;
+            const modal = document.getElementById('delete-confirmation-modal');
+            if (modal) modal.classList.remove('hidden');
+        }
+
+        function confirmDeleteBlock() {
+            if (pendingDeleteBlock) {
+                saveHistoryState();
+                state.blocks = state.blocks.filter(b => b !== pendingDeleteBlock);
+                if (state.targetBlock === pendingDeleteBlock) state.targetBlock = null;
+                state.isDirty = true;
+                pendingDeleteBlock = null;
+            }
+            const modal = document.getElementById('delete-confirmation-modal');
+            if (modal) modal.classList.add('hidden');
+        }
+
+        function cancelDeleteBlock() {
+            pendingDeleteBlock = null;
+            const modal = document.getElementById('delete-confirmation-modal');
+            if (modal) modal.classList.add('hidden');
+        }
+
+        document.getElementById('confirm-delete-block-btn').addEventListener('click', confirmDeleteBlock);
+        document.getElementById('cancel-delete-block-btn').addEventListener('click', cancelDeleteBlock);
 
         function showAddMediaPopup(clientX, clientY, baseX, trackIdx) {
             hideTrackContextMenu();
@@ -980,6 +1342,23 @@
             }
         }
 
+        async function insertVFXToTimeline(effectId, effectName, defaultParams, baseX, trackIdx) {
+            const newBlock = {
+                id: 'block-' + Date.now(),
+                track: trackIdx,
+                type: 'vfx',
+                name: effectName,
+                x: baseX,
+                w: 200, // default length for VFX block
+                color: '#f59e0b', // Amber/yellow for VFX
+                vfxParams: JSON.parse(JSON.stringify(defaultParams))
+            };
+            saveHistoryState();
+            state.blocks.push(newBlock);
+            state.targetBlock = newBlock;
+            state.isDirty = true;
+        }
+
         async function openMediaSelectorModal(baseX, trackIdx) {
             const modal = document.getElementById('media-selector-modal');
             if (!modal) return;
@@ -996,68 +1375,94 @@
             if (trackNameEl) trackNameEl.textContent = targetTrack ? targetTrack.name : 'V1';
             if (timeStrEl) timeStrEl.textContent = timeStr;
 
-            const grid = document.getElementById('media-selector-grid');
-            if (grid) {
-                grid.innerHTML = '<div class="col-span-full py-4 text-center text-xs text-[#a3a3a3]">Loading library...</div>';
-                
-                try {
-                    const mediaFiles = await getAllFilesFromDB();
-                    grid.innerHTML = '';
+            const isVFX = targetTrack && targetTrack.type === 'vfx';
+            const mediaSection = document.getElementById('modal-media-section');
+            const vfxSection = document.getElementById('modal-vfx-section');
 
-                    if (!mediaFiles || mediaFiles.length === 0) {
-                        grid.innerHTML = `
-                            <div class="col-span-full py-6 text-center text-xs text-[#a3a3a3] bg-[#1e1e1e] rounded-lg border border-[#333333] p-4">
-                                <i data-lucide="folder-open" class="w-6 h-6 mx-auto mb-2 text-[#a3a3a3]"></i>
-                                <p class="font-medium text-[#f5f5f5]">No media in project library yet</p>
-                                <p class="text-[11px] text-[#888888] mt-1">Upload a media file using the button above to insert directly into track ${targetTrack?.name || ''}!</p>
-                            </div>
+            if (isVFX) {
+                if (mediaSection) mediaSection.classList.add('hidden');
+                if (vfxSection) vfxSection.classList.remove('hidden');
+
+                const vfxGrid = document.getElementById('vfx-selector-grid');
+                if (vfxGrid && window.VFXEngine) {
+                    vfxGrid.innerHTML = '';
+                    window.VFXEngine.availableEffects.forEach(effect => {
+                        const card = document.createElement('div');
+                        card.className = "bg-[#2e2e2e] border border-[#333333] hover:border-[#f5f5f5] rounded-lg p-2.5 flex flex-col justify-center items-center cursor-pointer transition-all hover:scale-[1.02] select-none group h-24 gap-2";
+                        card.innerHTML = `
+                            <i data-lucide="sparkles" class="w-6 h-6 text-emerald-400"></i>
+                            <span class="text-xs text-[#f5f5f5] font-medium text-center">${effect.name}</span>
                         `;
-                    } else {
-                        for (const item of mediaFiles) {
-                            const fileType = item.file.type ? item.file.type.split('/')[0] : 'video';
-                            let iconName = 'film';
-                            if (fileType === 'audio') iconName = 'music';
-                            else if (fileType === 'image') iconName = 'image';
-                            else if (fileType === 'unknown') iconName = 'file';
+                        card.addEventListener('click', () => {
+                            insertVFXToTimeline(effect.id, effect.name, effect.defaultParams, baseX, trackIdx);
+                            closeMediaSelectorModal();
+                        });
+                        vfxGrid.appendChild(card);
+                    });
+                }
+            } else {
+                if (mediaSection) mediaSection.classList.remove('hidden');
+                if (vfxSection) vfxSection.classList.add('hidden');
 
-                            const card = document.createElement('div');
-                            card.className = "bg-[#2e2e2e] border border-[#333333] hover:border-[#f5f5f5] rounded-lg p-2.5 flex flex-col justify-between cursor-pointer transition-all hover:scale-[1.02] select-none group";
+                const grid = document.getElementById('media-selector-grid');
+                if (grid) {
+                    grid.innerHTML = '<div class="col-span-full py-4 text-center text-xs text-[#a3a3a3]">Loading library...</div>';
+                    
+                    try {
+                        const mediaFiles = await getAllFilesFromDB();
+                        grid.innerHTML = '';
 
-                            const objectUrl = URL.createObjectURL(item.file);
-
-                            let previewHtml = '';
-                            if (fileType === 'image') {
-                                previewHtml = `<img src="${objectUrl}" class="w-full h-12 object-cover rounded pointer-events-none" />`;
-                            } else if (fileType === 'video') {
-                                previewHtml = `<video src="${objectUrl}#t=0.5" class="w-full h-12 object-cover rounded pointer-events-none" preload="metadata"></video>`;
-                            } else {
-                                previewHtml = `<div class="w-full h-12 bg-[#1a1a1a] rounded flex items-center justify-center text-[#a3a3a3] pointer-events-none"><i data-lucide="${iconName}" class="w-5 h-5"></i></div>`;
-                            }
-
-                            card.innerHTML = `
-                                ${previewHtml}
-                                <div class="mt-2 flex items-center justify-between gap-1 pointer-events-none">
-                                    <span class="text-xs text-[#f5f5f5] font-medium truncate">${item.name}</span>
-                                    <span class="text-[10px] text-emerald-400 bg-emerald-950/60 px-1.5 py-0.5 rounded border border-emerald-800/50 uppercase font-mono">Insert</span>
+                        if (!mediaFiles || mediaFiles.length === 0) {
+                            grid.innerHTML = `
+                                <div class="col-span-full py-6 text-center text-xs text-[#a3a3a3] bg-[#1e1e1e] rounded-lg border border-[#333333] p-4">
+                                    <i data-lucide="folder-open" class="w-6 h-6 mx-auto mb-2 text-[#a3a3a3]"></i>
+                                    <p class="font-medium text-[#f5f5f5]">No media in project library yet</p>
+                                    <p class="text-[11px] text-[#888888] mt-1">Upload a media file using the button above to insert directly into track ${targetTrack?.name || ''}!</p>
                                 </div>
                             `;
+                        } else {
+                            for (const item of mediaFiles) {
+                                const fileType = item.file.type ? item.file.type.split('/')[0] : 'video';
+                                let iconName = 'film';
+                                if (fileType === 'audio') iconName = 'music';
+                                else if (fileType === 'image') iconName = 'image';
+                                else if (fileType === 'unknown') iconName = 'file';
 
-                            card.addEventListener('click', async () => {
-                                await insertMediaToTimeline(item.file, item.name, baseX, trackIdx);
-                                closeMediaSelectorModal();
-                                URL.revokeObjectURL(objectUrl);
-                            });
+                                const card = document.createElement('div');
+                                card.className = "bg-[#2e2e2e] border border-[#333333] hover:border-[#f5f5f5] rounded-lg p-2.5 flex flex-col justify-between cursor-pointer transition-all hover:scale-[1.02] select-none group";
 
-                            grid.appendChild(card);
+                                const objectUrl = URL.createObjectURL(item.file);
+
+                                let previewHtml = '';
+                                if (fileType === 'image') {
+                                    previewHtml = `<img src="${objectUrl}" class="w-full h-12 object-cover rounded pointer-events-none" />`;
+                                } else if (fileType === 'video') {
+                                    previewHtml = `<video src="${objectUrl}#t=0.5" class="w-full h-12 object-cover rounded pointer-events-none" preload="metadata"></video>`;
+                                } else {
+                                    previewHtml = `<div class="w-full h-12 bg-[#1a1a1a] rounded flex items-center justify-center text-[#a3a3a3] pointer-events-none"><i data-lucide="${iconName}" class="w-5 h-5"></i></div>`;
+                                }
+
+                                card.innerHTML = `
+                                    ${previewHtml}
+                                    <div class="mt-2 flex items-center justify-between gap-1 pointer-events-none">
+                                        <span class="text-xs text-[#f5f5f5] font-medium truncate">${item.name}</span>
+                                        <span class="text-[10px] text-emerald-400 bg-emerald-950/60 px-1.5 py-0.5 rounded border border-emerald-800/50 uppercase font-mono">Insert</span>
+                                    </div>
+                                `;
+
+                                card.addEventListener('click', async () => {
+                                    await insertMediaToTimeline(item.file, item.name, baseX, trackIdx);
+                                    closeMediaSelectorModal();
+                                    URL.revokeObjectURL(objectUrl);
+                                });
+
+                                grid.appendChild(card);
+                            }
                         }
+                    } catch (err) {
+                        console.error("Failed to load media items for selector:", err);
+                        grid.innerHTML = '<div class="col-span-full py-4 text-center text-xs text-red-400">Failed to load media files</div>';
                     }
-                } catch (err) {
-                    console.error("Failed to load media items for selector:", err);
-                    grid.innerHTML = '<div class="col-span-full py-4 text-center text-xs text-red-400">Failed to load media files</div>';
-                }
-
-                if (window.lucide) {
-                    window.lucide.createIcons();
                 }
             }
 
@@ -1066,6 +1471,7 @@
         }
 
         function closeMediaSelectorModal() {
+            console.trace("closeMediaSelectorModal called");
             const modal = document.getElementById('media-selector-modal');
             if (modal) modal.classList.add('hidden');
         }
@@ -1111,6 +1517,7 @@
                 duration: duration
             };
 
+            saveHistoryState();
             state.blocks.push(newBlock);
             state.targetBlock = newBlock;
             state.isDirty = true;
@@ -1130,14 +1537,15 @@
                     setTimeout(() => { isOpeningModal = false; }, 300);
 
                     hideAddMediaPopup();
-                    openMediaSelectorModal(pendingMediaInsertPos.baseX, pendingMediaInsertPos.trackIdx);
+                    setTimeout(() => {
+                        openMediaSelectorModal(pendingMediaInsertPos.baseX, pendingMediaInsertPos.trackIdx);
+                    }, 10);
                 };
 
                 addMediaPopupEl.addEventListener('pointerdown', (e) => {
                     e.stopPropagation();
                 });
                 addMediaPopupEl.addEventListener('click', triggerModal);
-                addMediaPopupEl.addEventListener('pointerup', triggerModal);
             }
 
             const closeMediaSelectorBtn = document.getElementById('close-media-selector-modal');
@@ -1186,6 +1594,11 @@
         canvas.addEventListener('pointerdown', (e) => {
             hideAddMediaPopup();
 
+            if (state.isPlaying) {
+                state.isPlaying = false;
+                updatePlayPauseUI();
+            }
+
             const rect = canvas.getBoundingClientRect();
             // Get coordinates relative to the canvas coordinate system
             const rawX = e.clientX - rect.left;
@@ -1216,6 +1629,14 @@
                         showAddMediaPopup(e.clientX, e.clientY, baseX, targetTrackIdx);
                     }, 300);
                 }
+            } else if (e.button === 0 && y >= state.rulerHeight) {
+                // If there are no tracks, or clicking below tracks, allow holding to show track context menu
+                emptySpaceHoldStartX = e.clientX;
+                emptySpaceHoldStartY = e.clientY;
+                if (emptySpaceHoldTimer) clearTimeout(emptySpaceHoldTimer);
+                emptySpaceHoldTimer = setTimeout(() => {
+                    showTrackContextMenu(e.clientX, e.clientY, state.tracks.length === 0 ? 0 : state.tracks.length);
+                }, 300);
             }
 
             // Check if clicking on Ruler (Scrubbing)
@@ -1238,6 +1659,7 @@
                     const renderW = block.w * state.zoom;
 
                     if (canvasX >= renderX - 5 && canvasX <= renderX + renderW + 5) {
+                        dragOldState = JSON.parse(JSON.stringify(state.blocks));
                         state.targetBlock = block;
                         state.dragging = true;
                         state.startX = baseX;
@@ -1254,6 +1676,18 @@
                         } else {
                             state.action = 'move';
                             canvas.style.cursor = 'grabbing';
+                        }
+                        if (e.button === 0) {
+                            canvasHoldStartX = e.clientX;
+                            canvasHoldStartY = e.clientY;
+                            if (canvasHoldTimer) clearTimeout(canvasHoldTimer);
+                            canvasHoldTimer = setTimeout(() => {
+                                promptDeleteBlock(block);
+                                state.dragging = false;
+                                state.action = null;
+                                canvas.style.cursor = "default";
+                                canvas.releasePointerCapture(e.pointerId);
+                            }, 500);
                         }
                         
                         state.isDirty = true;
@@ -1344,6 +1778,16 @@
                 clearTimeout(canvasHoldTimer);
                 canvasHoldTimer = null;
             }
+            
+            if (dragOldState && state.dragging && (state.action === 'move' || state.action === 'resize-left' || state.action === 'resize-right')) {
+                if (JSON.stringify(state.blocks) !== JSON.stringify(dragOldState)) {
+                    state.undoStack.push(dragOldState);
+                    if (state.undoStack.length > 50) state.undoStack.shift();
+                    state.redoStack = [];
+                }
+            }
+            dragOldState = null;
+
             state.dragging = false;
             state.action = null;
             canvas.style.cursor = 'default';
@@ -1370,13 +1814,32 @@
             }
 
             const rect = canvas.getBoundingClientRect();
+            const rawX = e.clientX - rect.left;
+            const canvasX = rawX - state.offsetX + state.scrollX;
             const rawY = e.clientY - rect.top;
 
             if (rawY >= state.rulerHeight) {
+                // Check if hit a block
+                for (let i = state.blocks.length - 1; i >= 0; i--) {
+                    const block = state.blocks[i];
+                    const by = state.rulerHeight + (block.track * state.trackHeight);
+                    if (rawY >= by && rawY <= by + state.trackHeight) {
+                        const renderX = block.x * state.zoom;
+                        const renderW = block.w * state.zoom;
+                        if (canvasX >= renderX && canvasX <= renderX + renderW) {
+                            promptDeleteBlock(block);
+                            return; // Deleted block, don't show track menu
+                        }
+                    }
+                }
+
                 const relativeY = rawY - state.rulerHeight;
                 const trackIdx = Math.floor(relativeY / state.trackHeight);
-                if (trackIdx >= 0 && trackIdx < state.tracks.length) {
+                if (state.tracks.length === 0 || (trackIdx >= 0 && trackIdx < state.tracks.length)) {
                     showTrackContextMenu(e.clientX, e.clientY, trackIdx);
+                } else {
+                    // Clicking below all tracks
+                    showTrackContextMenu(e.clientX, e.clientY, state.tracks.length);
                 }
             }
         });
@@ -1435,6 +1898,21 @@
                     moveTimeline('left', e.shiftKey ? 120 : 50);
                 } else if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') {
                     moveTimeline('right', e.shiftKey ? 120 : 50);
+                } else if (e.key === 'Backspace' || e.key === 'Delete') {
+                    if (state.targetBlock) {
+                        saveHistoryState();
+                        state.blocks = state.blocks.filter(b => b !== state.targetBlock);
+                        state.targetBlock = null;
+                        state.isDirty = true;
+                    }
+                } else if ((e.ctrlKey || e.metaKey) && (e.key === 'z' || e.key === 'Z')) {
+                    if (e.shiftKey) {
+                        performRedo();
+                    } else {
+                        performUndo();
+                    }
+                } else if ((e.ctrlKey || e.metaKey) && (e.key === 'y' || e.key === 'Y')) {
+                    performRedo();
                 }
             });
         }
@@ -1445,10 +1923,10 @@
             const skipForwardBtn = document.getElementById('btn-skip-forward');
 
             if (playBtn) {
-                playBtn.addEventListener('click', () => {
+                playBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
                     state.isPlaying = !state.isPlaying;
-                    playBtn.setAttribute('data-lucide', state.isPlaying ? 'pause' : 'play');
-                    lucide.createIcons();
+                    updatePlayPauseUI();
                     if (state.isPlaying) {
                         state.lastFrameTime = performance.now();
                         state.isDirty = true;
@@ -1488,6 +1966,7 @@
         initPlaybackControls();
         updateTrackNames();
         renderTrackHeaders();
+        loadProjectSettings();
 
         // Start render loop
         requestAnimationFrame(draw);
@@ -1525,6 +2004,10 @@
                     <button type="button" class="settings-nav-tab flex items-center gap-2.5 px-3 py-2 rounded text-xs font-medium text-left transition-colors whitespace-nowrap text-[#a3a3a3] hover:text-[#f5f5f5] hover:bg-[#2e2e2e]" data-tab="audio-tab">
                         <i data-lucide="volume-2" class="w-4 h-4 text-[#a3a3a3]"></i>
                         <span>Audio & Render</span>
+                    </button>
+                    <button type="button" class="settings-nav-tab flex items-center gap-2.5 px-3 py-2 rounded text-xs font-medium text-left transition-colors whitespace-nowrap text-[#a3a3a3] hover:text-[#f5f5f5] hover:bg-[#2e2e2e]" data-tab="shortcuts-tab">
+                        <i data-lucide="keyboard" class="w-4 h-4 text-[#a3a3a3]"></i>
+                        <span>Keyboard Shortcuts</span>
                     </button>
                 </div>
 
@@ -1725,6 +2208,51 @@
                                     <div class="text-[11px] text-[#a3a3a3]">Move MOOV atom to header for instant web playback</div>
                                 </div>
                                 <input type="checkbox" id="setting-fastStart" name="fastStart" checked class="w-4 h-4 rounded border-[#333333] bg-[#1a1a1a] accent-[#f5f5f5] cursor-pointer">
+                            </div>
+                        </div>
+
+                        <!-- TAB 4: Shortcuts -->
+                        <div id="shortcuts-tab" class="settings-tab-panel hidden space-y-5">
+                            <div class="border-b border-[#333333] pb-3">
+                                <h3 class="text-sm font-semibold text-[#f5f5f5] flex items-center gap-2">
+                                    <i data-lucide="keyboard" class="w-4 h-4 text-[#a3a3a3]"></i>
+                                    Keyboard Shortcuts
+                                </h3>
+                                <p class="text-xs text-[#a3a3a3] mt-1">Professional editing shortcuts to speed up your workflow.</p>
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div class="bg-[#1a1a1a] p-3 rounded-lg border border-[#333333] flex justify-between items-center">
+                                    <div class="text-xs font-medium text-[#f5f5f5]">Play / Pause</div>
+                                    <div class="flex gap-1"><kbd class="px-2 py-1 bg-[#2e2e2e] border border-[#333333] rounded text-[10px] text-[#f5f5f5] font-mono">Space</kbd></div>
+                                </div>
+                                <div class="bg-[#1a1a1a] p-3 rounded-lg border border-[#333333] flex justify-between items-center">
+                                    <div class="text-xs font-medium text-[#f5f5f5]">Undo</div>
+                                    <div class="flex gap-1"><kbd class="px-2 py-1 bg-[#2e2e2e] border border-[#333333] rounded text-[10px] text-[#f5f5f5] font-mono">Ctrl</kbd><span class="text-[#a3a3a3] text-xs">+</span><kbd class="px-2 py-1 bg-[#2e2e2e] border border-[#333333] rounded text-[10px] text-[#f5f5f5] font-mono">Z</kbd></div>
+                                </div>
+                                <div class="bg-[#1a1a1a] p-3 rounded-lg border border-[#333333] flex justify-between items-center">
+                                    <div class="text-xs font-medium text-[#f5f5f5]">Redo</div>
+                                    <div class="flex gap-1"><kbd class="px-2 py-1 bg-[#2e2e2e] border border-[#333333] rounded text-[10px] text-[#f5f5f5] font-mono">Ctrl</kbd><span class="text-[#a3a3a3] text-xs">+</span><kbd class="px-2 py-1 bg-[#2e2e2e] border border-[#333333] rounded text-[10px] text-[#f5f5f5] font-mono">Y</kbd></div>
+                                </div>
+                                <div class="bg-[#1a1a1a] p-3 rounded-lg border border-[#333333] flex justify-between items-center">
+                                    <div class="text-xs font-medium text-[#f5f5f5]">Delete Selected Clip</div>
+                                    <div class="flex gap-1"><kbd class="px-2 py-1 bg-[#2e2e2e] border border-[#333333] rounded text-[10px] text-[#f5f5f5] font-mono">Backspace</kbd></div>
+                                </div>
+                                <div class="bg-[#1a1a1a] p-3 rounded-lg border border-[#333333] flex justify-between items-center">
+                                    <div class="text-xs font-medium text-[#f5f5f5]">Move Left (Fine)</div>
+                                    <div class="flex gap-1"><kbd class="px-2 py-1 bg-[#2e2e2e] border border-[#333333] rounded text-[10px] text-[#f5f5f5] font-mono">Left Arrow</kbd></div>
+                                </div>
+                                <div class="bg-[#1a1a1a] p-3 rounded-lg border border-[#333333] flex justify-between items-center">
+                                    <div class="text-xs font-medium text-[#f5f5f5]">Move Right (Fine)</div>
+                                    <div class="flex gap-1"><kbd class="px-2 py-1 bg-[#2e2e2e] border border-[#333333] rounded text-[10px] text-[#f5f5f5] font-mono">Right Arrow</kbd></div>
+                                </div>
+                                <div class="bg-[#1a1a1a] p-3 rounded-lg border border-[#333333] flex justify-between items-center">
+                                    <div class="text-xs font-medium text-[#f5f5f5]">Move Left (Coarse)</div>
+                                    <div class="flex gap-1"><kbd class="px-2 py-1 bg-[#2e2e2e] border border-[#333333] rounded text-[10px] text-[#f5f5f5] font-mono">Shift</kbd><span class="text-[#a3a3a3] text-xs">+</span><kbd class="px-2 py-1 bg-[#2e2e2e] border border-[#333333] rounded text-[10px] text-[#f5f5f5] font-mono">Left Arrow</kbd></div>
+                                </div>
+                                <div class="bg-[#1a1a1a] p-3 rounded-lg border border-[#333333] flex justify-between items-center">
+                                    <div class="text-xs font-medium text-[#f5f5f5]">Move Right (Coarse)</div>
+                                    <div class="flex gap-1"><kbd class="px-2 py-1 bg-[#2e2e2e] border border-[#333333] rounded text-[10px] text-[#f5f5f5] font-mono">Shift</kbd><span class="text-[#a3a3a3] text-xs">+</span><kbd class="px-2 py-1 bg-[#2e2e2e] border border-[#333333] rounded text-[10px] text-[#f5f5f5] font-mono">Right Arrow</kbd></div>
+                                </div>
                             </div>
                         </div>
 
