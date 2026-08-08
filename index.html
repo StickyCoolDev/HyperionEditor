@@ -12,7 +12,7 @@
     <script src="/vfx.js" defer></script>
     <script src="/main.js" defer></script>
     <script src="/export.js" defer></script>
-    <script src="https://unpkg.com/lucide@latest" defer></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://unpkg.com/@ffmpeg/ffmpeg@0.12.7/dist/umd/ffmpeg.js" defer></script>
     <script src="https://unpkg.com/@ffmpeg/util@0.12.1/dist/umd/index.js" defer></script>
     <style>
@@ -308,7 +308,7 @@
 
     <script>
         // Initialize Lucide Icons
-        lucide.createIcons();
+        if (window.lucide) window.lucide.createIcons();
 
         // --- Fullscreen API Implementation ---
         const fullscreenBtn = document.getElementById('fullscreen-btn');
@@ -331,7 +331,7 @@
             } else {
                 fullscreenBtn.innerHTML = maximizeIcon;
             }
-            lucide.createIcons();
+            if (window.lucide) window.lucide.createIcons();
         });
 
         // --- High Performance Canvas Timeline Implementation ---
@@ -342,7 +342,7 @@
         const previewCtx = previewCanvas ? previewCanvas.getContext('2d') : null;
 
         // App State
-        window.appState = {
+        const state = {
             width: 0,
             height: 0,
             projectWidth: 1920,
@@ -381,6 +381,7 @@
             undoStack: [],
             redoStack: []
         };
+        window.appState = state;
 
         function saveHistoryState() {
             // Push a deep copy of blocks to undo stack
