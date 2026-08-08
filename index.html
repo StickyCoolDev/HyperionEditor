@@ -5,16 +5,18 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Video Editor UI</title>
+    <!-- Cross-Origin Isolation Service Worker for static CDNs / hosts -->
+    <script src="./coi-serviceworker.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Lucide Icons -->
-     <script src="https://unpkg.com/dexie@latest/dist/dexie.js"></script>
-    <script src="/db.js" defer></script>
-    <script src="/vfx.js" defer></script>
-    <script src="/main.js" defer></script>
-    <script src="/export.js" defer></script>
+    <script src="https://unpkg.com/dexie@latest/dist/dexie.js"></script>
+    <script src="./db.js" defer></script>
+    <script src="./vfx.js" defer></script>
+    <script src="./main.js" defer></script>
+    <script src="./export.js" defer></script>
     <script src="https://unpkg.com/lucide@latest"></script>
-    <script src="/vendor/ffmpeg/ffmpeg.js" defer></script>
-    <script src="/vendor/ffmpeg/ffmpeg-util.js" defer></script>
+    <script src="./vendor/ffmpeg/ffmpeg.js" defer></script>
+    <script src="./vendor/ffmpeg/ffmpeg-util.js" defer></script>
     <style>
         /* Custom Resets & Utilities */
         :root {

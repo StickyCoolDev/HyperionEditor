@@ -37,16 +37,23 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    function getFFmpegBaseURL() {
+        const path = window.location.pathname;
+        const dir = path.substring(0, path.lastIndexOf('/'));
+        return (dir === '' ? '' : dir) + '/vendor/ffmpeg';
+    }
+
     async function ensureFFmpegLoaded() {
         let FFmpegClass = getFFmpegClass();
         if (FFmpegClass && window.FFmpegUtil) {
             return { FFmpegClass, FFmpegUtil: window.FFmpegUtil };
         }
 
+        const baseURL = getFFmpegBaseURL();
         try {
             await Promise.all([
-                loadScript('/vendor/ffmpeg/ffmpeg.js'),
-                loadScript('/vendor/ffmpeg/ffmpeg-util.js')
+                loadScript(`${baseURL}/ffmpeg.js`),
+                loadScript(`${baseURL}/ffmpeg-util.js`)
             ]);
         } catch (e) {
             console.error('Error loading FFmpeg scripts:', e);
@@ -148,7 +155,8 @@ document.addEventListener('DOMContentLoaded', () => {
             });
 
             const { toBlobURL, fetchFile } = FFmpegUtil || {};
-            const baseURL = '/vendor/ffmpeg';
+            const baseURL = getFFmpegBaseURL();
+            const cdnURL = 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd';
 
             let coreURL, wasmURL;
             if (toBlobURL) {
@@ -157,16 +165,32 @@ document.addEventListener('DOMContentLoaded', () => {
                     coreURL = await toBlobURL(`${baseURL}/ffmpeg-core.js`, 'text/javascript');
                     wasmURL = await toBlobURL(`${baseURL}/ffmpeg-core.wasm`, 'application/wasm');
                 } catch (err) {
-                    console.warn('toBlobURL error, falling back to direct URLs', err);
-                    coreURL = `${baseURL}/ffmpeg-core.js`;
-                    wasmURL = `${baseURL}/ffmpeg-core.wasm`;
+                    console.warn('Local WASM load error, attempting CDN fallback', err);
+                    try {
+                        coreURL = await toBlobURL(`${cdnURL}/ffmpeg-core.js`, 'text/javascript');
+                        wasmURL = await toBlobURL(`${cdnURL}/ffmpeg-core.wasm`, 'application/wasm');
+                    } catch (cdnErr) {
+                        coreURL = `${baseURL}/ffmpeg-core.js`;
+                        wasmURL = `${baseURL}/ffmpeg-core.wasm`;
+                    }
                 }
             } else {
                 coreURL = `${baseURL}/ffmpeg-core.js`;
                 wasmURL = `${baseURL}/ffmpeg-core.wasm`;
             }
 
-            await ffmpeg.load({ coreURL, wasmURL });
+            try {
+                await ffmpeg.load({ coreURL, wasmURL });
+            } catch (loadErr) {
+                console.warn('First FFmpeg load attempt failed, trying CDN fallback...', loadErr);
+                if (toBlobURL && coreURL !== `${cdnURL}/ffmpeg-core.js`) {
+                    const altCoreURL = await toBlobURL(`${cdnURL}/ffmpeg-core.js`, 'text/javascript');
+                    const altWasmURL = await toBlobURL(`${cdnURL}/ffmpeg-core.wasm`, 'application/wasm');
+                    await ffmpeg.load({ coreURL: altCoreURL, wasmURL: altWasmURL });
+                } else {
+                    throw loadErr;
+                }
+            }
 
             toast.innerText = 'Processing media files...';
             for (const [name, file] of uniqueFiles.entries()) {
