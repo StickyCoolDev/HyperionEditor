@@ -419,3 +419,61 @@ function initSettingsModal() {
     });
   }
 }
+// Drag and drop support
+const dropZone = document.body;
+
+['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+  dropZone.addEventListener(eventName, preventDefaults, false);
+});
+
+function preventDefaults (e) {
+  e.preventDefault();
+  e.stopPropagation();
+}
+
+['dragenter', 'dragover'].forEach(eventName => {
+  dropZone.addEventListener(eventName, highlight, false);
+});
+
+['dragleave', 'drop'].forEach(eventName => {
+  dropZone.addEventListener(eventName, unhighlight, false);
+});
+
+function highlight(e) {
+  // optionally add a class to highlight
+}
+
+function unhighlight(e) {
+  // remove highlight
+}
+
+dropZone.addEventListener('drop', handleDrop, false);
+
+async function handleDrop(e) {
+  const dt = e.dataTransfer;
+  const files = dt.files;
+  
+  if (!files || files.length === 0) return;
+  
+  const container = document.getElementById("mediaItemContainer") || mediaItemContainer;
+     
+  for (const file of files) {
+    if (!file.type.startsWith('video/') && !file.type.startsWith('image/') && !file.type.startsWith('audio/')) {
+        continue;
+    }
+    try {
+      // Save file into Dexie DB
+      const dbRecord = await saveFileToDB(file);
+      const card = await createMediaItemElement(file, dbRecord);
+      if (container) {
+        container.appendChild(card);
+      }
+    } catch (err) {
+      console.error("Failed to save media item from drop:", err);
+    }
+  }
+     
+  if (window.lucide) {
+    window.lucide.createIcons();
+  }
+}
