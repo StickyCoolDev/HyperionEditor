@@ -1667,10 +1667,10 @@
                         state.initialBlockW = block.w;
                         
                         // Check if hitting resize handles (left or right 10px)
-                        if (block.type === 'image' && canvasX < renderX + 10) {
+                        if ((block.type === 'image' || block.type === 'vfx') && canvasX < renderX + 10) {
                             state.action = 'resize-left';
                             canvas.style.cursor = 'ew-resize';
-                        } else if (block.type === 'image' && canvasX > renderX + renderW - 10) {
+                        } else if ((block.type === 'image' || block.type === 'vfx') && canvasX > renderX + renderW - 10) {
                             state.action = 'resize-right';
                             canvas.style.cursor = 'ew-resize';
                         } else {
@@ -1981,7 +1981,6 @@
                     <i data-lucide="settings" class="w-5 h-5 text-[#f5f5f5]"></i>
                     <div>
                         <h2 class="text-sm sm:text-base font-semibold text-[#f5f5f5] leading-tight">Project & Export Settings</h2>
-                        <p class="text-[11px] sm:text-xs text-[#a3a3a3]">Configure canvas resolution, frame rate, export quality and audio settings</p>
                     </div>
                 </div>
                 <button type="button" id="close-settings-modal" class="icon-btn hover:bg-[#2e2e2e] text-[#a3a3a3] hover:text-[#f5f5f5]" title="Close">

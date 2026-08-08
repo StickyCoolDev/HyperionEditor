@@ -177,10 +177,12 @@ if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', () => {
     loadSavedMedia();
     initSettingsModal();
+    getSettingsFromDB().then(settings => window.dispatchEvent(new CustomEvent('settingsChanged', { detail: settings })));
   });
 } else {
   loadSavedMedia();
   initSettingsModal();
+  getSettingsFromDB().then(settings => window.dispatchEvent(new CustomEvent('settingsChanged', { detail: settings })));
 }
 
 // ==========================================
