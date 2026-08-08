@@ -11,7 +11,10 @@
     <script src="/db.js" defer></script>
     <script src="/vfx.js" defer></script>
     <script src="/main.js" defer></script>
-    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="/export.js" defer></script>
+    <script src="https://unpkg.com/lucide@latest" defer></script>
+    <script src="https://unpkg.com/@ffmpeg/ffmpeg@0.12.7/dist/umd/ffmpeg.js" defer></script>
+    <script src="https://unpkg.com/@ffmpeg/util@0.12.1/dist/umd/index.js" defer></script>
     <style>
         /* Custom Resets & Utilities */
         :root {
@@ -84,7 +87,7 @@
             <!-- Actions -->
             <div class="icon-btn" id="settings-btn" title="Settings"><i data-lucide="settings"></i></div>
             <div class="icon-btn"><i data-lucide="folder-open"></i></div>
-            <div class="icon-btn"><i data-lucide="download"></i></div>
+            <div class="icon-btn" id="export-btn" title="Export Video"><i data-lucide="download"></i></div>
             <div class="icon-btn bg-[#f5f5f5] text-[#1a1a1a] hover:bg-[#d4d4d4]">
                 <i data-lucide="share" class="stroke-[2]"></i>
             </div>
@@ -112,7 +115,7 @@
         <section class="flex-1 bg-[#1a1a1a] flex flex-col relative border-b border-[#333333] md:border-b-0 min-w-0 min-h-0">
             <!-- Video Player Area -->
             <div id="preview-wrapper" class="flex-1 p-2 md:p-6 flex items-center justify-center min-h-0 overflow-hidden relative">
-                <div id="preview-box" class="bg-[#0a0a0a] border border-[#333333] flex items-center justify-center relative overflow-hidden shadow-xl transition-all duration-75">
+                <div id="preview-box" class="bg-[#0a0a0a] border border-[#333333] flex items-center justify-center relative overflow-hidden shadow-xl transition-all duration-75 touch-none">
                     <canvas id="preview-canvas" class="w-full h-full block pointer-events-none"></canvas>
                 </div>
             </div>
@@ -156,7 +159,7 @@
                 <!-- Tool icons (Hidden on mobile) -->
                 <div class="hidden md:flex items-center gap-1">
                     <div class="icon-btn active"><i data-lucide="mouse-pointer-2" class="w-4 h-4"></i></div>
-                    <div class="icon-btn"><i data-lucide="scissors" class="w-4 h-4"></i></div>
+                    <button type="button" id="split-tool-btn" class="icon-btn cursor-pointer" title="Split Block at Playhead"><i data-lucide="scissors" class="w-4 h-4"></i></button>
                     <div class="icon-btn"><i data-lucide="hand" class="w-4 h-4"></i></div>
                     <div class="icon-btn"><i data-lucide="pen-tool" class="w-4 h-4"></i></div>
                     
@@ -339,7 +342,7 @@
         const previewCtx = previewCanvas ? previewCanvas.getContext('2d') : null;
 
         // App State
-        const state = {
+        window.appState = {
             width: 0,
             height: 0,
             projectWidth: 1920,
@@ -366,6 +369,7 @@
             startX: 0,
             initialBlockX: 0,
             initialBlockW: 0,
+            initialSourceOffset: 0,
             scrubStartY: 0,
             scrubStartX: 0,
             initialZoom: 1.0,
@@ -1057,7 +1061,7 @@
                     const isVideo = activeVideoImageBlock.type === 'video';
                     
                     if (isVideo && !state.isPlaying) {
-                        const relativeTime = Math.max(0, (state.playheadX - activeVideoImageBlock.x) / 100);
+                        const relativeTime = Math.max(0, ((state.playheadX - activeVideoImageBlock.x) + (activeVideoImageBlock.sourceOffset || 0)) / 100);
                         if (Math.abs(media.currentTime - relativeTime) > 0.05) {
                             media.currentTime = relativeTime;
                         }
@@ -1067,23 +1071,48 @@
                     let mediaHeight = isVideo ? media.videoHeight : media.naturalHeight;
                     
                     if (mediaWidth && mediaHeight) {
-                        const canvasRatio = previewCanvas.width / previewCanvas.height;
-                        const mediaRatio = mediaWidth / mediaHeight;
-                        let drawWidth, drawHeight;
-                        
-                        if (canvasRatio > mediaRatio) {
-                            drawHeight = previewCanvas.height;
-                            drawWidth = drawHeight * mediaRatio;
-                        } else {
-                            drawWidth = previewCanvas.width;
-                            drawHeight = drawWidth / mediaRatio;
+                        if (activeVideoImageBlock.mediaW === undefined) {
+                            const canvasRatio = previewCanvas.width / previewCanvas.height;
+                            const mediaRatio = mediaWidth / mediaHeight;
+                            
+                            if (canvasRatio > mediaRatio) {
+                                activeVideoImageBlock.mediaH = previewCanvas.height;
+                                activeVideoImageBlock.mediaW = activeVideoImageBlock.mediaH * mediaRatio;
+                            } else {
+                                activeVideoImageBlock.mediaW = previewCanvas.width;
+                                activeVideoImageBlock.mediaH = activeVideoImageBlock.mediaW / mediaRatio;
+                            }
+                            
+                            activeVideoImageBlock.mediaX = (previewCanvas.width - activeVideoImageBlock.mediaW) / 2;
+                            activeVideoImageBlock.mediaY = (previewCanvas.height - activeVideoImageBlock.mediaH) / 2;
                         }
-                        
-                        const drawX = (previewCanvas.width - drawWidth) / 2;
-                        const drawY = (previewCanvas.height - drawHeight) / 2;
-                        
+
+                        const drawWidth = activeVideoImageBlock.mediaW;
+                        const drawHeight = activeVideoImageBlock.mediaH;
+                        const drawX = activeVideoImageBlock.mediaX;
+                        const drawY = activeVideoImageBlock.mediaY;
+
                         try {
                             previewCtx.drawImage(media, drawX, drawY, drawWidth, drawHeight);
+                            
+                            if (state.targetBlock === activeVideoImageBlock && activeVideoImageBlock.type === 'image') {
+                                // Draw transform box
+                                previewCtx.strokeStyle = '#3b82f6';
+                                previewCtx.lineWidth = Math.max(2, previewCanvas.width / 400); // Scale line width slightly
+                                previewCtx.strokeRect(drawX, drawY, drawWidth, drawHeight);
+                                
+                                const handleSize = Math.max(10, previewCanvas.width / 100);
+                                previewCtx.fillStyle = '#ffffff';
+                                
+                                // TL
+                                previewCtx.fillRect(drawX - handleSize/2, drawY - handleSize/2, handleSize, handleSize);
+                                // TR
+                                previewCtx.fillRect(drawX + drawWidth - handleSize/2, drawY - handleSize/2, handleSize, handleSize);
+                                // BL
+                                previewCtx.fillRect(drawX - handleSize/2, drawY + drawHeight - handleSize/2, handleSize, handleSize);
+                                // BR
+                                previewCtx.fillRect(drawX + drawWidth - handleSize/2, drawY + drawHeight - handleSize/2, handleSize, handleSize);
+                            }
                         } catch(e) {}
                     }
                 } else if (!activeVideoImageBlock) {
@@ -1111,7 +1140,7 @@
 
                     if (shouldPlay) {
                         if (block.mediaElement.paused) {
-                            const relTime = Math.max(0, (state.playheadX - block.x) / 100);
+                            const relTime = Math.max(0, ((state.playheadX - block.x) + (block.sourceOffset || 0)) / 100);
                             block.mediaElement.currentTime = relTime;
                             block.mediaElement.play().catch(() => {});
                         }
@@ -1206,7 +1235,7 @@
                 ctx.strokeRect(renderX, y, renderW, h);
 
                 // Resize Handles (if selected)
-                if (block === state.targetBlock && block.type === 'image') {
+                if (block === state.targetBlock) {
                     ctx.fillStyle = '#f5f5f5';
                     ctx.fillRect(renderX, y, 4, h); // Left handle
                     ctx.fillRect(renderX + renderW - 4, y, 4, h); // Right handle
@@ -1514,7 +1543,8 @@
                 color: color,
                 type: fileType === 'audio' ? 'audio' : (fileType === 'image' ? 'image' : 'video'),
                 mediaElement: mediaElement,
-                duration: duration
+                duration: duration,
+                fileObj: file
             };
 
             saveHistoryState();
@@ -1665,12 +1695,13 @@
                         state.startX = baseX;
                         state.initialBlockX = block.x;
                         state.initialBlockW = block.w;
+                        state.initialSourceOffset = block.sourceOffset || 0;
                         
                         // Check if hitting resize handles (left or right 10px)
-                        if ((block.type === 'image' || block.type === 'vfx') && canvasX < renderX + 10) {
+                        if (canvasX < renderX + 10) {
                             state.action = 'resize-left';
                             canvas.style.cursor = 'ew-resize';
-                        } else if ((block.type === 'image' || block.type === 'vfx') && canvasX > renderX + renderW - 10) {
+                        } else if (canvasX > renderX + renderW - 10) {
                             state.action = 'resize-right';
                             canvas.style.cursor = 'ew-resize';
                         } else {
@@ -1764,6 +1795,7 @@
                     const widthDiff = state.initialBlockX - newX;
                     state.targetBlock.x = newX;
                     state.targetBlock.w = state.initialBlockW + widthDiff;
+                    state.targetBlock.sourceOffset = state.initialSourceOffset - widthDiff;
                 }
             }
             state.isDirty = true;
@@ -1852,6 +1884,63 @@
                 state.scrollX = state.scrollX + amount;
             }
             state.isDirty = true;
+        }
+
+        function initSplitTool() {
+            const splitBtn = document.getElementById('split-tool-btn');
+            if (!splitBtn) return;
+            
+            splitBtn.addEventListener('click', () => {
+                let blockToSplit = state.targetBlock;
+                
+                // If no block is selected, try to find one intersecting the playhead
+                if (!blockToSplit) {
+                    const hitBlocks = state.blocks.filter(b => state.playheadX > b.x && state.playheadX < b.x + b.w);
+                    if (hitBlocks.length > 0) {
+                        blockToSplit = hitBlocks[hitBlocks.length - 1]; // get top-most visual
+                    }
+                }
+                
+                if (!blockToSplit) return;
+                
+                if (state.playheadX <= blockToSplit.x || state.playheadX >= blockToSplit.x + blockToSplit.w) {
+                    return; // Playhead is not over the block
+                }
+                
+                saveHistoryState();
+                
+                const splitPoint = state.playheadX - blockToSplit.x;
+                const originalW = blockToSplit.w;
+                
+                // Left piece
+                blockToSplit.w = splitPoint;
+                
+                // Right piece
+                const newBlock = { ...blockToSplit };
+                newBlock.id = Date.now().toString() + Math.random().toString(36).substring(2, 7);
+                newBlock.x = state.playheadX;
+                newBlock.w = originalW - splitPoint;
+                
+                // If it's a VFX block, deep clone params
+                if (newBlock.vfxParams) {
+                    newBlock.vfxParams = JSON.parse(JSON.stringify(newBlock.vfxParams));
+                }
+                
+                // For video/audio, adjust source offset
+                newBlock.sourceOffset = (blockToSplit.sourceOffset || 0) + splitPoint;
+                
+                state.blocks.push(newBlock);
+                state.targetBlock = newBlock; // Select the new right piece
+                state.isDirty = true;
+            });
+            
+            // Also bind 'S' key to split
+            window.addEventListener('keydown', (e) => {
+                if (['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement?.tagName)) return;
+                if (e.key === 's' || e.key === 'S') {
+                    splitBtn.click();
+                }
+            });
         }
 
         function initTimelineNavigation() {
@@ -1959,9 +2048,165 @@
             });
         }
 
+        function initPreviewInteraction() {
+            const previewBox = document.getElementById('preview-box');
+            if (!previewBox) return;
+
+            let previewAction = null; // 'move', 'resize-tl', 'resize-tr', 'resize-bl', 'resize-br'
+            let pStartX = 0;
+            let pStartY = 0;
+            let initialMediaX = 0;
+            let initialMediaY = 0;
+            let initialMediaW = 0;
+            let initialMediaH = 0;
+
+            function getActiveImageBlock() {
+                if (!state.targetBlock || state.targetBlock.type !== 'image') return null;
+                if (state.playheadX >= state.targetBlock.x && state.playheadX <= state.targetBlock.x + state.targetBlock.w) {
+                    return state.targetBlock;
+                }
+                return null;
+            }
+
+            function getCanvasCoords(e) {
+                const rect = previewBox.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                return {
+                    x: (x / rect.width) * (state.projectWidth || 1920),
+                    y: (y / rect.height) * (state.projectHeight || 1080)
+                };
+            }
+
+            previewBox.addEventListener('pointerdown', (e) => {
+                const block = getActiveImageBlock();
+                if (!block || block.mediaW === undefined) return;
+                
+                const coords = getCanvasCoords(e);
+                const mx = block.mediaX;
+                const my = block.mediaY;
+                const mw = block.mediaW;
+                const mh = block.mediaH;
+                const handleSize = Math.max(30, (state.projectWidth || 1920) / 40);
+                
+                if (Math.abs(coords.x - mx) < handleSize && Math.abs(coords.y - my) < handleSize) {
+                    previewAction = 'resize-tl';
+                } else if (Math.abs(coords.x - (mx + mw)) < handleSize && Math.abs(coords.y - my) < handleSize) {
+                    previewAction = 'resize-tr';
+                } else if (Math.abs(coords.x - mx) < handleSize && Math.abs(coords.y - (my + mh)) < handleSize) {
+                    previewAction = 'resize-bl';
+                } else if (Math.abs(coords.x - (mx + mw)) < handleSize && Math.abs(coords.y - (my + mh)) < handleSize) {
+                    previewAction = 'resize-br';
+                } else if (coords.x >= mx && coords.x <= mx + mw && coords.y >= my && coords.y <= my + mh) {
+                    previewAction = 'move';
+                } else {
+                    return;
+                }
+
+                saveHistoryState();
+                pStartX = coords.x;
+                pStartY = coords.y;
+                initialMediaX = block.mediaX;
+                initialMediaY = block.mediaY;
+                initialMediaW = block.mediaW;
+                initialMediaH = block.mediaH;
+                
+                previewBox.setPointerCapture(e.pointerId);
+                e.preventDefault();
+            });
+
+            previewBox.addEventListener('pointermove', (e) => {
+                const block = getActiveImageBlock();
+                if (!block || block.mediaW === undefined) {
+                    previewBox.style.cursor = 'default';
+                    return;
+                }
+                
+                const coords = getCanvasCoords(e);
+                
+                if (previewAction) {
+                    const dx = coords.x - pStartX;
+                    const dy = coords.y - pStartY;
+                    
+                    if (previewAction === 'move') {
+                        block.mediaX = initialMediaX + dx;
+                        block.mediaY = initialMediaY + dy;
+                    } else {
+                        let newW = initialMediaW;
+                        let newH = initialMediaH;
+                        let newX = initialMediaX;
+                        let newY = initialMediaY;
+                        
+                        const ratio = initialMediaW / initialMediaH;
+                        const maintainRatio = e.shiftKey;
+                        
+                        if (previewAction === 'resize-tl') {
+                            newW = initialMediaW - dx;
+                            newH = initialMediaH - dy;
+                            if (maintainRatio) newH = newW / ratio;
+                            newX = initialMediaX + (initialMediaW - newW);
+                            newY = initialMediaY + (initialMediaH - newH);
+                        } else if (previewAction === 'resize-tr') {
+                            newW = initialMediaW + dx;
+                            newH = initialMediaH - dy;
+                            if (maintainRatio) newH = newW / ratio;
+                            newY = initialMediaY + (initialMediaH - newH);
+                        } else if (previewAction === 'resize-bl') {
+                            newW = initialMediaW - dx;
+                            newH = initialMediaH + dy;
+                            if (maintainRatio) newW = newH * ratio;
+                            newX = initialMediaX + (initialMediaW - newW);
+                        } else if (previewAction === 'resize-br') {
+                            newW = initialMediaW + dx;
+                            newH = initialMediaH + dy;
+                            if (maintainRatio) newH = newW / ratio;
+                        }
+                        
+                        if (newW > 10 && newH > 10) {
+                            block.mediaW = newW;
+                            block.mediaH = newH;
+                            block.mediaX = newX;
+                            block.mediaY = newY;
+                        }
+                    }
+                    state.isDirty = true;
+                } else {
+                    const mx = block.mediaX;
+                    const my = block.mediaY;
+                    const mw = block.mediaW;
+                    const mh = block.mediaH;
+                    const handleSize = Math.max(30, (state.projectWidth || 1920) / 40);
+                    
+                    if (Math.abs(coords.x - mx) < handleSize && Math.abs(coords.y - my) < handleSize) {
+                        previewBox.style.cursor = 'nwse-resize';
+                    } else if (Math.abs(coords.x - (mx + mw)) < handleSize && Math.abs(coords.y - (my + mh)) < handleSize) {
+                        previewBox.style.cursor = 'nwse-resize';
+                    } else if (Math.abs(coords.x - (mx + mw)) < handleSize && Math.abs(coords.y - my) < handleSize) {
+                        previewBox.style.cursor = 'nesw-resize';
+                    } else if (Math.abs(coords.x - mx) < handleSize && Math.abs(coords.y - (my + mh)) < handleSize) {
+                        previewBox.style.cursor = 'nesw-resize';
+                    } else if (coords.x >= mx && coords.x <= mx + mw && coords.y >= my && coords.y <= my + mh) {
+                        previewBox.style.cursor = 'move';
+                    } else {
+                        previewBox.style.cursor = 'default';
+                    }
+                }
+            });
+
+            previewBox.addEventListener('pointerup', (e) => {
+                if (previewAction) {
+                    previewBox.releasePointerCapture(e.pointerId);
+                    previewAction = null;
+                    state.isDirty = true;
+                }
+            });
+        }
+
         // Initialize Timeline & Zoom UI
         initZoomState();
         initTimelineNavigation();
+        initPreviewInteraction();
+        initSplitTool();
         initAddMediaPopup();
         initPlaybackControls();
         updateTrackNames();
