@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Video Editor UI</title>
+    <title>Hyperion Editor</title>
     <!-- Cross-Origin Isolation Service Worker for static CDNs / hosts -->
     <script src="./coi-serviceworker.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
@@ -18,24 +18,180 @@
     <script src="./vendor/ffmpeg/ffmpeg.js" defer></script>
     <script src="./vendor/ffmpeg/ffmpeg-util.js" defer></script>
     <style>
-        /* Custom Resets & Utilities */
-        :root {
-            --light-black: #1a1a1a;
+        /* ==========================================
+           COLOR THEMES DEFINITIONS
+           ========================================== */
+        
+        /* 1. Default Dark */
+        :root, [data-theme="default-dark"] {
+            --bg-main: #1a1a1a;
             --panel-bg: #242424;
             --element-bg: #2e2e2e;
-            --smoke-white: #f5f5f5;
-            --smoke-muted: #a3a3a3;
+            --element-hover: #383838;
+            --text-main: #f5f5f5;
+            --text-muted: #a3a3a3;
+            --border-color: #333333;
+            --border-hover: #a3a3a3;
+            --accent-bg: #f5f5f5;
+            --accent-fg: #1a1a1a;
+            --accent-hover: #d4d4d4;
+            --preview-bg: #0a0a0a;
+            --input-bg: #2e2e2e;
+            --header-bg: #1a1a1a;
+            --playhead-color: #f5f5f5;
         }
-        
+
+        /* 2. White Mode */
+        [data-theme="white-mode"] {
+            --bg-main: #f8f9fa;
+            --panel-bg: #ffffff;
+            --element-bg: #f1f3f5;
+            --element-hover: #e9ecef;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --border-color: #e2e8f0;
+            --border-hover: #94a3b8;
+            --accent-bg: #2563eb;
+            --accent-fg: #ffffff;
+            --accent-hover: #1d4ed8;
+            --preview-bg: #cbd5e1;
+            --input-bg: #f1f3f5;
+            --header-bg: #ffffff;
+            --playhead-color: #2563eb;
+        }
+
+        /* 3. Purple-ish Mode */
+        [data-theme="purple-mode"] {
+            --bg-main: #120924;
+            --panel-bg: #1e1035;
+            --element-bg: #2c184d;
+            --element-hover: #3b1f66;
+            --text-main: #f3e8ff;
+            --text-muted: #c084fc;
+            --border-color: #4c1d95;
+            --border-hover: #a855f7;
+            --accent-bg: #c084fc;
+            --accent-fg: #120924;
+            --accent-hover: #e9d5ff;
+            --preview-bg: #0a0414;
+            --input-bg: #2c184d;
+            --header-bg: #180a30;
+            --playhead-color: #f43f5e;
+        }
+
+        /* 4. GitHub Dark Mode */
+        [data-theme="github-dark"] {
+            --bg-main: #0d1117;
+            --panel-bg: #161b22;
+            --element-bg: #21262d;
+            --element-hover: #30363d;
+            --text-main: #c9d1d9;
+            --text-muted: #8b949e;
+            --border-color: #30363d;
+            --border-hover: #8b949e;
+            --accent-bg: #58a6ff;
+            --accent-fg: #0d1117;
+            --accent-hover: #79c0ff;
+            --preview-bg: #010409;
+            --input-bg: #21262d;
+            --header-bg: #161b22;
+            --playhead-color: #f85149;
+        }
+
+        /* Global Theme Overrides */
         body {
             margin: 0;
             padding: 0;
-            background-color: var(--light-black);
-            color: var(--smoke-white);
+            background-color: var(--bg-main) !important;
+            color: var(--text-main) !important;
             overflow: hidden;
             font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-            /* Explicitly disable shadows everywhere to meet strict constraints */
+            transition: background-color 0.25s ease, color 0.25s ease;
             * { box-shadow: none !important; }
+        }
+
+        header {
+            background-color: var(--header-bg) !important;
+            border-color: var(--border-color) !important;
+        }
+
+        aside {
+            background-color: var(--panel-bg) !important;
+            border-color: var(--border-color) !important;
+        }
+
+        main section {
+            background-color: var(--bg-main) !important;
+            border-color: var(--border-color) !important;
+        }
+
+        #preview-box {
+            background-color: var(--preview-bg) !important;
+            border-color: var(--border-color) !important;
+        }
+
+        .icon-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 36px;
+            height: 36px;
+            border-radius: 4px;
+            cursor: pointer;
+            color: var(--text-main) !important;
+            transition: background-color 0.2s, color 0.2s;
+        }
+
+        .icon-btn:hover {
+            background-color: var(--element-bg) !important;
+        }
+
+        .icon-btn.active {
+            background-color: var(--element-bg) !important;
+            border: 1px solid var(--text-main) !important;
+        }
+
+        /* Dynamic Panel & Modal Theme Overrides */
+        #settings-modal > div,
+        #media-selector-modal > div,
+        #delete-confirmation-modal > div,
+        #track-context-menu,
+        #add-media-popup,
+        #theme-dropdown-menu {
+            background-color: var(--panel-bg) !important;
+            border-color: var(--border-color) !important;
+            color: var(--text-main) !important;
+        }
+
+        #settings-modal .h-14, 
+        #settings-modal .h-12,
+        #settings-modal .w-56,
+        #media-selector-modal .h-12, 
+        #media-selector-modal .bg-\[\#1e1e1e\] {
+            background-color: var(--header-bg) !important;
+            border-color: var(--border-color) !important;
+        }
+
+        input[type="text"], input[type="number"], input[type="range"], select, textarea {
+            background-color: var(--input-bg) !important;
+            border-color: var(--border-color) !important;
+            color: var(--text-main) !important;
+        }
+
+        /* Timeline Scrubber Container */
+        section.h-1\/3, section.md\:h-\[40\%\] {
+            background-color: var(--panel-bg) !important;
+            border-color: var(--border-color) !important;
+        }
+
+        #track-headers-container {
+            background-color: var(--panel-bg) !important;
+            border-color: var(--border-color) !important;
+            color: var(--text-muted) !important;
+        }
+
+        #track-headers-container div {
+            border-color: var(--border-color) !important;
         }
 
         /* Hide scrollbars for clean UI */
@@ -48,49 +204,72 @@
             stroke-width: 1.5;
         }
 
-        .icon-btn {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 36px;
-            height: 36px;
-            border-radius: 4px;
-            cursor: pointer;
-            transition: background-color 0.2s;
-        }
-
-        .icon-btn:hover {
-            background-color: var(--element-bg);
-        }
-
-        .icon-btn.active {
-            background-color: var(--element-bg);
-            border: 1px solid var(--smoke-white);
-        }
-
         /* Prevent touch actions on canvas to allow smooth dragging on mobile */
         #timeline-canvas-container {
             touch-action: none;
         }
     </style>
 </head>
-<body class="w-[100svw] h-[100svh] flex flex-col select-none">
+<body class="w-[100svw] h-[100svh] flex flex-col select-none" data-theme="default-dark">
 
     <!-- Top Navigation / Header -->
     <header class="h-12 w-full bg-[#1a1a1a] border-b border-[#333333] flex items-center justify-between px-4 shrink-0">
-        <div class="flex items-center gap-4">
-            <i data-lucide="video" class="text-[#f5f5f5]"></i>
+        <div class="flex items-center gap-3">
+            <i data-lucide="video" class="text-[var(--text-main)] w-5 h-5"></i>
+            <span class="font-bold text-sm tracking-wide text-[var(--text-main)]">Hyperion Editor</span>
         </div>
         
         <div class="flex items-center gap-2">
+            <!-- Theme Selector Dropdown -->
+            <div class="relative flex items-center" id="theme-selector-wrapper">
+                <button type="button" id="theme-dropdown-btn" class="flex items-center gap-1.5 px-2.5 py-1.5 rounded bg-[var(--element-bg)] text-[var(--text-main)] border border-[var(--border-color)] hover:border-[var(--border-hover)] text-xs font-medium cursor-pointer transition-colors" title="Select Colour Theme">
+                    <i data-lucide="palette" class="w-4 h-4 text-[var(--text-muted)]"></i>
+                    <span id="current-theme-label" class="hidden sm:inline font-medium">Default Dark</span>
+                    <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-[var(--text-muted)]"></i>
+                </button>
+                <div id="theme-dropdown-menu" class="hidden absolute right-0 top-full mt-1.5 w-52 bg-[var(--panel-bg)] border border-[var(--border-color)] rounded-lg p-1.5 shadow-2xl z-50 text-xs text-[var(--text-main)] select-none">
+                    <div class="px-2 py-1 text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)] border-b border-[var(--border-color)] mb-1">
+                        Colour Themes
+                    </div>
+                    <button type="button" class="theme-option-btn w-full flex items-center justify-between px-2.5 py-2 rounded hover:bg-[var(--element-bg)] transition-colors text-left" data-theme-id="default-dark">
+                        <div class="flex items-center gap-2">
+                            <span class="w-3.5 h-3.5 rounded-full bg-[#1a1a1a] border border-[#555] shrink-0"></span>
+                            <span class="font-medium">Default Dark</span>
+                        </div>
+                        <i data-lucide="check" class="w-3.5 h-3.5 text-emerald-400 theme-check hidden"></i>
+                    </button>
+                    <button type="button" class="theme-option-btn w-full flex items-center justify-between px-2.5 py-2 rounded hover:bg-[var(--element-bg)] transition-colors text-left" data-theme-id="white-mode">
+                        <div class="flex items-center gap-2">
+                            <span class="w-3.5 h-3.5 rounded-full bg-[#f8f9fa] border border-[#ccc] shrink-0"></span>
+                            <span class="font-medium">White Mode</span>
+                        </div>
+                        <i data-lucide="check" class="w-3.5 h-3.5 text-emerald-400 theme-check hidden"></i>
+                    </button>
+                    <button type="button" class="theme-option-btn w-full flex items-center justify-between px-2.5 py-2 rounded hover:bg-[var(--element-bg)] transition-colors text-left" data-theme-id="purple-mode">
+                        <div class="flex items-center gap-2">
+                            <span class="w-3.5 h-3.5 rounded-full bg-[#2c184d] border border-[#a855f7] shrink-0"></span>
+                            <span class="font-medium">Purple-ish Mode</span>
+                        </div>
+                        <i data-lucide="check" class="w-3.5 h-3.5 text-emerald-400 theme-check hidden"></i>
+                    </button>
+                    <button type="button" class="theme-option-btn w-full flex items-center justify-between px-2.5 py-2 rounded hover:bg-[var(--element-bg)] transition-colors text-left" data-theme-id="github-dark">
+                        <div class="flex items-center gap-2">
+                            <span class="w-3.5 h-3.5 rounded-full bg-[#0d1117] border border-[#30363d] shrink-0"></span>
+                            <span class="font-medium">GitHub Dark Mode</span>
+                        </div>
+                        <i data-lucide="check" class="w-3.5 h-3.5 text-emerald-400 theme-check hidden"></i>
+                    </button>
+                </div>
+            </div>
+
             <!-- Fullscreen Toggle -->
-            <div class="icon-btn" id="fullscreen-btn"><i data-lucide="maximize"></i></div>
-            <div class="w-px h-6 bg-[#333333] mx-2"></div>
+            <div class="icon-btn" id="fullscreen-btn" title="Toggle Fullscreen"><i data-lucide="maximize"></i></div>
+            <div class="w-px h-6 bg-[var(--border-color)] mx-1"></div>
             <!-- Actions -->
             <div class="icon-btn" id="settings-btn" title="Settings"><i data-lucide="settings"></i></div>
-            <div class="icon-btn"><i data-lucide="folder-open"></i></div>
+            <div class="icon-btn" title="Open Project"><i data-lucide="folder-open"></i></div>
             <div class="icon-btn" id="export-btn" title="Export Video"><i data-lucide="download"></i></div>
-            <div class="icon-btn bg-[#f5f5f5] text-[#1a1a1a] hover:bg-[#d4d4d4]">
+            <div class="icon-btn bg-[var(--accent-bg)] text-[var(--accent-fg)] hover:opacity-90">
                 <i data-lucide="share" class="stroke-[2]"></i>
             </div>
         </div>
@@ -1155,8 +1334,13 @@
                 }
             }
 
+            // Theme Colors for Canvas Rendering
+            const tc = (typeof THEMES !== 'undefined' && typeof currentThemeId !== 'undefined' && THEMES[currentThemeId]) 
+                ? THEMES[currentThemeId] 
+                : { canvasBg: '#1a1a1a', rulerBg: '#242424', border: '#333333', textMuted: '#a3a3a3', playhead: '#f5f5f5', playheadText: '#1a1a1a', selectedBlockBorder: '#f5f5f5' };
+
             // Background
-            ctx.fillStyle = '#1a1a1a';
+            ctx.fillStyle = tc.canvasBg;
             ctx.fillRect(0, 0, state.width, state.height);
 
             ctx.save();
@@ -1169,11 +1353,11 @@
             ctx.translate(state.offsetX - state.scrollX, 0);
 
             // Draw Ruler ticks
-            ctx.fillStyle = '#242424';
+            ctx.fillStyle = tc.rulerBg;
             ctx.fillRect(state.scrollX, 0, state.width, state.rulerHeight);
             
-            ctx.strokeStyle = '#333333';
-            ctx.fillStyle = '#a3a3a3';
+            ctx.strokeStyle = tc.border;
+            ctx.fillStyle = tc.textMuted;
             ctx.font = '10px monospace';
             ctx.textBaseline = 'top';
             ctx.lineWidth = 1;
@@ -1212,7 +1396,7 @@
             }
 
             // Draw Tracks grid lines
-            ctx.strokeStyle = '#333333';
+            ctx.strokeStyle = tc.border;
             ctx.beginPath();
             for (let i = 0; i <= state.tracks.length; i++) {
                 const y = state.rulerHeight + (i * state.trackHeight);
@@ -1233,20 +1417,20 @@
                 ctx.fillRect(renderX, y, renderW, h);
                 
                 // Block Border
-                ctx.strokeStyle = (block === state.targetBlock) ? '#f5f5f5' : '#333333';
+                ctx.strokeStyle = (block === state.targetBlock) ? tc.selectedBlockBorder : tc.border;
                 ctx.lineWidth = (block === state.targetBlock) ? 2 : 1;
                 ctx.strokeRect(renderX, y, renderW, h);
 
                 // Resize Handles (if selected)
                 if (block === state.targetBlock) {
-                    ctx.fillStyle = '#f5f5f5';
+                    ctx.fillStyle = tc.selectedBlockBorder;
                     ctx.fillRect(renderX, y, 4, h); // Left handle
                     ctx.fillRect(renderX + renderW - 4, y, 4, h); // Right handle
                 }
                 
                 // Label (Mockup wave/thumbnail)
                 if (renderW > 30) {
-                    ctx.fillStyle = '#a3a3a3';
+                    ctx.fillStyle = tc.textMuted;
                     ctx.font = '10px sans-serif';
                     ctx.fillText(block.type.toUpperCase(), renderX + 8, y + 8);
                 }
@@ -1254,7 +1438,7 @@
 
             // Draw Playhead
             const renderPlayheadX = state.playheadX * state.zoom;
-            ctx.strokeStyle = '#f5f5f5';
+            ctx.strokeStyle = tc.playhead;
             ctx.lineWidth = 1.5;
             ctx.beginPath();
             ctx.moveTo(renderPlayheadX, 0);
@@ -1267,7 +1451,7 @@
             const pSecs = totalPlayheadSec % 60;
             const timeBadgeStr = `00:${pMins.toString().padStart(2, '0')}:${pSecs.toString().padStart(2, '0')}`;
 
-            ctx.fillStyle = '#f5f5f5';
+            ctx.fillStyle = tc.playhead;
             if (ctx.roundRect) {
                 ctx.beginPath();
                 ctx.roundRect(renderPlayheadX - 28, 2, 56, 16, 3);
@@ -1276,14 +1460,14 @@
                 ctx.fillRect(renderPlayheadX - 28, 2, 56, 16);
             }
 
-            ctx.fillStyle = '#1a1a1a';
+            ctx.fillStyle = tc.playheadText;
             ctx.font = 'bold 9.5px monospace';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
             ctx.fillText(timeBadgeStr, renderPlayheadX, 10);
 
             // Playhead triangle cap below badge
-            ctx.fillStyle = '#f5f5f5';
+            ctx.fillStyle = tc.playhead;
             ctx.beginPath();
             ctx.moveTo(renderPlayheadX - 6, 18);
             ctx.lineTo(renderPlayheadX + 6, 18);
@@ -1296,7 +1480,7 @@
             ctx.restore();
             
             // Draw a subtle border separating the left header from the canvas logic
-            ctx.fillStyle = '#333333';
+            ctx.fillStyle = tc.border;
             ctx.fillRect(state.offsetX, 0, 1, state.height);
 
             state.isDirty = false;
@@ -2205,7 +2389,138 @@
             });
         }
 
-        // Initialize Timeline & Zoom UI
+        // --- Theme System ---
+        const THEMES = {
+            'default-dark': {
+                name: 'Default Dark',
+                canvasBg: '#1a1a1a',
+                rulerBg: '#242424',
+                border: '#333333',
+                textMuted: '#a3a3a3',
+                playhead: '#f5f5f5',
+                playheadText: '#1a1a1a',
+                selectedBlockBorder: '#f5f5f5'
+            },
+            'white-mode': {
+                name: 'White Mode',
+                canvasBg: '#f8f9fa',
+                rulerBg: '#ffffff',
+                border: '#e2e8f0',
+                textMuted: '#64748b',
+                playhead: '#2563eb',
+                playheadText: '#ffffff',
+                selectedBlockBorder: '#2563eb'
+            },
+            'purple-mode': {
+                name: 'Purple-ish Mode',
+                canvasBg: '#120924',
+                rulerBg: '#1e1035',
+                border: '#4c1d95',
+                textMuted: '#c084fc',
+                playhead: '#f43f5e',
+                playheadText: '#ffffff',
+                selectedBlockBorder: '#c084fc'
+            },
+            'github-dark': {
+                name: 'GitHub Dark Mode',
+                canvasBg: '#0d1117',
+                rulerBg: '#161b22',
+                border: '#30363d',
+                textMuted: '#8b949e',
+                playhead: '#f85149',
+                playheadText: '#ffffff',
+                selectedBlockBorder: '#58a6ff'
+            }
+        };
+
+        let currentThemeId = 'default-dark';
+
+        function setTheme(themeId) {
+            if (!THEMES[themeId]) themeId = 'default-dark';
+            currentThemeId = themeId;
+            document.body.setAttribute('data-theme', themeId);
+            try {
+                localStorage.setItem('hyperedit_theme', themeId);
+            } catch (e) {
+                console.warn('LocalStorage error saving theme:', e);
+            }
+
+            // Update UI Labels
+            const labelEl = document.getElementById('current-theme-label');
+            if (labelEl) labelEl.textContent = THEMES[themeId].name;
+
+            // Update dropdown checkmarks
+            document.querySelectorAll('.theme-option-btn').forEach(btn => {
+                const id = btn.getAttribute('data-theme-id');
+                const check = btn.querySelector('.theme-check');
+                if (check) {
+                    if (id === themeId) {
+                        check.classList.remove('hidden');
+                    } else {
+                        check.classList.add('hidden');
+                    }
+                }
+            });
+
+            // Update settings cards selection border
+            document.querySelectorAll('.theme-card').forEach(card => {
+                const id = card.getAttribute('data-theme-id');
+                if (id === themeId) {
+                    card.classList.add('ring-2', 'ring-emerald-500', 'border-transparent');
+                } else {
+                    card.classList.remove('ring-2', 'ring-emerald-500', 'border-transparent');
+                }
+            });
+
+            // Flag timeline dirty so canvas re-renders with new theme colors
+            state.isDirty = true;
+        }
+
+        function initTheme() {
+            let savedTheme = 'default-dark';
+            try {
+                savedTheme = localStorage.getItem('hyperedit_theme') || 'default-dark';
+            } catch (e) {}
+            setTheme(savedTheme);
+
+            // Dropdown Toggle
+            const dropdownBtn = document.getElementById('theme-dropdown-btn');
+            const dropdownMenu = document.getElementById('theme-dropdown-menu');
+
+            if (dropdownBtn && dropdownMenu) {
+                dropdownBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    dropdownMenu.classList.toggle('hidden');
+                    if (window.lucide) window.lucide.createIcons();
+                });
+
+                document.addEventListener('pointerdown', (e) => {
+                    if (!e.target.closest('#theme-selector-wrapper')) {
+                        dropdownMenu.classList.add('hidden');
+                    }
+                });
+            }
+
+            // Theme Option Button Clicks
+            document.querySelectorAll('.theme-option-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const themeId = btn.getAttribute('data-theme-id');
+                    setTheme(themeId);
+                    if (dropdownMenu) dropdownMenu.classList.add('hidden');
+                });
+            });
+
+            // Theme Cards in Settings Clicks
+            document.querySelectorAll('.theme-card').forEach(card => {
+                card.addEventListener('click', () => {
+                    const themeId = card.getAttribute('data-theme-id');
+                    setTheme(themeId);
+                });
+            });
+        }
+
+        // Initialize Timeline, Theme & Zoom UI
+        initTheme();
         initZoomState();
         initTimelineNavigation();
         initPreviewInteraction();
@@ -2251,6 +2566,10 @@
                     <button type="button" class="settings-nav-tab flex items-center gap-2.5 px-3 py-2 rounded text-xs font-medium text-left transition-colors whitespace-nowrap text-[#a3a3a3] hover:text-[#f5f5f5] hover:bg-[#2e2e2e]" data-tab="audio-tab">
                         <i data-lucide="volume-2" class="w-4 h-4 text-[#a3a3a3]"></i>
                         <span>Audio & Render</span>
+                    </button>
+                    <button type="button" class="settings-nav-tab flex items-center gap-2.5 px-3 py-2 rounded text-xs font-medium text-left transition-colors whitespace-nowrap text-[#a3a3a3] hover:text-[#f5f5f5] hover:bg-[#2e2e2e]" data-tab="theme-tab">
+                        <i data-lucide="palette" class="w-4 h-4 text-[#a3a3a3]"></i>
+                        <span>Appearance & Theme</span>
                     </button>
                     <button type="button" class="settings-nav-tab flex items-center gap-2.5 px-3 py-2 rounded text-xs font-medium text-left transition-colors whitespace-nowrap text-[#a3a3a3] hover:text-[#f5f5f5] hover:bg-[#2e2e2e]" data-tab="shortcuts-tab">
                         <i data-lucide="keyboard" class="w-4 h-4 text-[#a3a3a3]"></i>
@@ -2458,7 +2777,84 @@
                             </div>
                         </div>
 
-                        <!-- TAB 4: Shortcuts -->
+                        <!-- TAB 4: Theme & Appearance -->
+                        <div id="theme-tab" class="settings-tab-panel hidden space-y-5">
+                            <div class="border-b border-[var(--border-color)] pb-3">
+                                <h3 class="text-sm font-semibold text-[var(--text-main)] flex items-center gap-2">
+                                    <i data-lucide="palette" class="w-4 h-4 text-[var(--text-muted)]"></i>
+                                    Colour Theme Selection
+                                </h3>
+                                <p class="text-xs text-[var(--text-muted)] mt-0.5">Select a tailored visual theme for your editing workstation. Changes apply instantly.</p>
+                            </div>
+
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5" id="settings-theme-cards">
+                                <!-- Default Dark Card -->
+                                <div class="theme-card cursor-pointer p-3.5 rounded-lg border-2 border-[var(--border-color)] hover:border-[var(--border-hover)] bg-[var(--element-bg)] transition-all relative" data-theme-id="default-dark">
+                                    <div class="flex items-center justify-between mb-2">
+                                        <div class="flex items-center gap-2 font-semibold text-xs text-[var(--text-main)]">
+                                            <span class="w-3.5 h-3.5 rounded-full bg-[#1a1a1a] border border-[#555] shrink-0"></span>
+                                            <span>Default Dark</span>
+                                        </div>
+                                        <span class="text-[10px] uppercase font-mono px-1.5 py-0.5 rounded bg-black/40 text-[var(--text-muted)]">Default</span>
+                                    </div>
+                                    <p class="text-[11px] text-[var(--text-muted)] mb-3">Classic charcoal dark theme optimized for studio editing sessions.</p>
+                                    <div class="h-6 rounded bg-[#1a1a1a] border border-[#333] flex items-center justify-between px-2">
+                                        <span class="text-[10px] text-[#f5f5f5]">Timeline Canvas</span>
+                                        <span class="text-[9px] text-[#a3a3a3] font-mono">#1A1A1A</span>
+                                    </div>
+                                </div>
+
+                                <!-- White Mode Card -->
+                                <div class="theme-card cursor-pointer p-3.5 rounded-lg border-2 border-[var(--border-color)] hover:border-[var(--border-hover)] bg-[var(--element-bg)] transition-all relative" data-theme-id="white-mode">
+                                    <div class="flex items-center justify-between mb-2">
+                                        <div class="flex items-center gap-2 font-semibold text-xs text-[var(--text-main)]">
+                                            <span class="w-3.5 h-3.5 rounded-full bg-[#f8f9fa] border border-[#ccc] shrink-0"></span>
+                                            <span>White Mode</span>
+                                        </div>
+                                        <span class="text-[10px] uppercase font-mono px-1.5 py-0.5 rounded bg-black/40 text-[var(--text-muted)]">Light</span>
+                                    </div>
+                                    <p class="text-[11px] text-[var(--text-muted)] mb-3">High-contrast, clean white theme for well-lit workspaces and day editing.</p>
+                                    <div class="h-6 rounded bg-[#f8f9fa] border border-[#e2e8f0] flex items-center justify-between px-2">
+                                        <span class="text-[10px] text-[#0f172a]">Timeline Canvas</span>
+                                        <span class="text-[9px] text-[#64748b] font-mono">#F8F9FA</span>
+                                    </div>
+                                </div>
+
+                                <!-- Purple-ish Mode Card -->
+                                <div class="theme-card cursor-pointer p-3.5 rounded-lg border-2 border-[var(--border-color)] hover:border-[var(--border-hover)] bg-[var(--element-bg)] transition-all relative" data-theme-id="purple-mode">
+                                    <div class="flex items-center justify-between mb-2">
+                                        <div class="flex items-center gap-2 font-semibold text-xs text-[var(--text-main)]">
+                                            <span class="w-3.5 h-3.5 rounded-full bg-[#2c184d] border border-[#a855f7] shrink-0"></span>
+                                            <span>Purple-ish Mode</span>
+                                        </div>
+                                        <span class="text-[10px] uppercase font-mono px-1.5 py-0.5 rounded bg-black/40 text-[#c084fc]">Vibrant</span>
+                                    </div>
+                                    <p class="text-[11px] text-[var(--text-muted)] mb-3">Neon cyberpunk purple theme designed for creative visual artists.</p>
+                                    <div class="h-6 rounded bg-[#120924] border border-[#4c1d95] flex items-center justify-between px-2">
+                                        <span class="text-[10px] text-[#f3e8ff]">Timeline Canvas</span>
+                                        <span class="text-[9px] text-[#c084fc] font-mono">#120924</span>
+                                    </div>
+                                </div>
+
+                                <!-- GitHub Dark Mode Card -->
+                                <div class="theme-card cursor-pointer p-3.5 rounded-lg border-2 border-[var(--border-color)] hover:border-[var(--border-hover)] bg-[var(--element-bg)] transition-all relative" data-theme-id="github-dark">
+                                    <div class="flex items-center justify-between mb-2">
+                                        <div class="flex items-center gap-2 font-semibold text-xs text-[var(--text-main)]">
+                                            <span class="w-3.5 h-3.5 rounded-full bg-[#0d1117] border border-[#30363d] shrink-0"></span>
+                                            <span>GitHub Dark Mode</span>
+                                        </div>
+                                        <span class="text-[10px] uppercase font-mono px-1.5 py-0.5 rounded bg-black/40 text-[#58a6ff]">Developer</span>
+                                    </div>
+                                    <p class="text-[11px] text-[var(--text-muted)] mb-3">Sleek GitHub slate dark aesthetic with distinct slate borders and accents.</p>
+                                    <div class="h-6 rounded bg-[#0d1117] border border-[#30363d] flex items-center justify-between px-2">
+                                        <span class="text-[10px] text-[#c9d1d9]">Timeline Canvas</span>
+                                        <span class="text-[9px] text-[#8b949e] font-mono">#0D1117</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- TAB 5: Shortcuts -->
                         <div id="shortcuts-tab" class="settings-tab-panel hidden space-y-5">
                             <div class="border-b border-[#333333] pb-3">
                                 <h3 class="text-sm font-semibold text-[#f5f5f5] flex items-center gap-2">

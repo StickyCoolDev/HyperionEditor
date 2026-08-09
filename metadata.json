@@ -1,5 +1,5 @@
 {
-  "name": "HyperEdit Video Editor",
+  "name": "Hyperion Editor",
   "description": "Video editor web interface with media bin, preview area, properties panel, and high-performance canvas timeline.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
