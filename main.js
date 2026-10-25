@@ -201,12 +201,14 @@ function initSettingsModal() {
 
   const widthInput = document.getElementById('setting-width');
   const heightInput = document.getElementById('setting-height');
+  const resolutionPresetSelect = document.getElementById('setting-resolution-preset');
   const fpsSelect = document.getElementById('setting-fps');
   const canvasBgPicker = document.getElementById('setting-canvasBg');
   const canvasBgHex = document.getElementById('setting-canvasBg-hex');
 
   const exportFormatSelect = document.getElementById('setting-exportFormat');
   const videoCodecSelect = document.getElementById('setting-videoCodec');
+  const compressionSelect = document.getElementById('setting-compression');
   const videoBitrateRange = document.getElementById('setting-videoBitrate');
   const bitrateValDisplay = document.getElementById('bitrate-val-display');
 
@@ -214,6 +216,7 @@ function initSettingsModal() {
   const audioResolutionSelect = document.getElementById('setting-audioResolution');
   const audioSampleRateSelect = document.getElementById('setting-audioSampleRate');
   const fastStartCheckbox = document.getElementById('setting-fastStart');
+  const themeSelect = document.getElementById('setting-theme');
 
   const presetButtons = document.querySelectorAll('.preset-btn');
   const navTabs = document.querySelectorAll('.settings-nav-tab');
@@ -251,11 +254,11 @@ function initSettingsModal() {
       const targetPanelId = tab.getAttribute('data-tab');
       
       navTabs.forEach(t => {
-        t.classList.remove('bg-[#2e2e2e]', 'text-[#f5f5f5]', 'border', 'border-[#333333]');
-        t.classList.add('text-[#a3a3a3]');
+        t.classList.remove('bg-[var(--element-bg)]', 'text-[var(--text-main)]', 'border', 'border-[var(--border-color)]', 'bg-[#2e2e2e]', 'text-[#f5f5f5]', 'border-[#333333]');
+        t.classList.add('text-[var(--text-muted)]');
       });
-      tab.classList.add('bg-[#2e2e2e]', 'text-[#f5f5f5]', 'border', 'border-[#333333]');
-      tab.classList.remove('text-[#a3a3a3]');
+      tab.classList.add('bg-[var(--element-bg)]', 'text-[var(--text-main)]', 'border', 'border-[var(--border-color)]');
+      tab.classList.remove('text-[var(--text-muted)]');
 
       tabPanels.forEach(panel => {
         if (panel.id === targetPanelId) {
@@ -264,10 +267,36 @@ function initSettingsModal() {
           panel.classList.add('hidden');
         }
       });
+      if (window.lucide) window.lucide.createIcons();
     });
   });
 
-  // Preset Buttons
+  // Resolution Preset Dropdown (Standardized Vertical Menu)
+  if (resolutionPresetSelect) {
+    resolutionPresetSelect.addEventListener('change', () => {
+      const preset = resolutionPresetSelect.value;
+      activeResolutionPreset = preset;
+      if (preset === 'square_1080p') {
+        if (widthInput) widthInput.value = 1080;
+        if (heightInput) heightInput.value = 1080;
+      } else if (preset === '1080p') {
+        if (widthInput) widthInput.value = 1920;
+        if (heightInput) heightInput.value = 1080;
+      } else if (preset === 'vertical_1080p') {
+        if (widthInput) widthInput.value = 1080;
+        if (heightInput) heightInput.value = 1920;
+      } else if (preset === '4k') {
+        if (widthInput) widthInput.value = 3840;
+        if (heightInput) heightInput.value = 2160;
+      } else if (preset === '720p') {
+        if (widthInput) widthInput.value = 1280;
+        if (heightInput) heightInput.value = 720;
+      }
+      updatePresetButtonStyles();
+    });
+  }
+
+  // Legacy preset buttons fallback if any
   presetButtons.forEach(btn => {
     btn.addEventListener('click', () => {
       const preset = btn.getAttribute('data-preset');
@@ -279,6 +308,7 @@ function initSettingsModal() {
         if (widthInput) widthInput.value = w;
         if (heightInput) heightInput.value = h;
       }
+      if (resolutionPresetSelect) resolutionPresetSelect.value = preset;
       updatePresetButtonStyles();
     });
   });
@@ -293,6 +323,9 @@ function initSettingsModal() {
   });
 
   function updatePresetButtonStyles() {
+    if (resolutionPresetSelect) {
+      resolutionPresetSelect.value = activeResolutionPreset;
+    }
     presetButtons.forEach(btn => {
       const preset = btn.getAttribute('data-preset');
       if (preset === activeResolutionPreset) {
@@ -306,18 +339,15 @@ function initSettingsModal() {
   }
 
   function checkPresetMatch() {
-    const w = widthInput ? widthInput.value : '';
-    const h = heightInput ? heightInput.value : '';
+    const w = widthInput ? parseInt(widthInput.value, 10) : 0;
+    const h = heightInput ? parseInt(heightInput.value, 10) : 0;
     let matched = 'custom';
 
-    presetButtons.forEach(btn => {
-      const presetW = btn.getAttribute('data-w');
-      const presetH = btn.getAttribute('data-h');
-      const presetKey = btn.getAttribute('data-preset');
-      if (presetKey !== 'custom' && presetW === w && presetH === h) {
-        matched = presetKey;
-      }
-    });
+    if (w === 1080 && h === 1080) matched = 'square_1080p';
+    else if (w === 1920 && h === 1080) matched = '1080p';
+    else if (w === 1080 && h === 1920) matched = 'vertical_1080p';
+    else if (w === 3840 && h === 2160) matched = '4k';
+    else if (w === 1280 && h === 720) matched = '720p';
 
     activeResolutionPreset = matched;
     updatePresetButtonStyles();
@@ -342,6 +372,15 @@ function initSettingsModal() {
     });
   }
 
+  // Theme Select Handler in Settings
+  if (themeSelect) {
+    themeSelect.addEventListener('change', () => {
+      if (typeof setTheme === 'function') {
+        setTheme(themeSelect.value);
+      }
+    });
+  }
+
   // Populate UI from Dexie DB
   async function loadSettingsIntoUI() {
     const settings = await getSettingsFromDB();
@@ -349,14 +388,17 @@ function initSettingsModal() {
     activeResolutionPreset = settings.resolutionPreset || '1080p';
     if (widthInput) widthInput.value = settings.width || 1920;
     if (heightInput) heightInput.value = settings.height || 1080;
+    checkPresetMatch();
+
     if (fpsSelect) fpsSelect.value = settings.fps || 30;
     if (canvasBgPicker) canvasBgPicker.value = settings.canvasBg || '#000000';
     if (canvasBgHex) canvasBgHex.value = settings.canvasBg || '#000000';
 
     if (exportFormatSelect) exportFormatSelect.value = settings.exportFormat || 'mp4';
     if (videoCodecSelect) videoCodecSelect.value = settings.videoCodec || 'h264';
+    if (compressionSelect) compressionSelect.value = settings.compression || 'medium';
     
-    // Compression radio
+    // Compression radio fallback if present
     const compRadio = document.querySelector(`input[name="compression"][value="${settings.compression || 'medium'}"]`);
     if (compRadio) compRadio.checked = true;
 
@@ -370,6 +412,10 @@ function initSettingsModal() {
     if (audioSampleRateSelect) audioSampleRateSelect.value = settings.audioSampleRate || '48000';
     if (fastStartCheckbox) fastStartCheckbox.checked = settings.fastStart !== false;
 
+    if (themeSelect && typeof currentThemeId !== 'undefined') {
+      themeSelect.value = currentThemeId;
+    }
+
     updatePresetButtonStyles();
     window.dispatchEvent(new CustomEvent('settingsChanged', { detail: settings }));
   }
@@ -378,6 +424,7 @@ function initSettingsModal() {
   if (saveSettingsBtn) {
     saveSettingsBtn.addEventListener('click', async () => {
       const selectedCompressionRadio = document.querySelector('input[name="compression"]:checked');
+      const compVal = compressionSelect ? compressionSelect.value : (selectedCompressionRadio ? selectedCompressionRadio.value : 'medium');
       
       const settingsToSave = {
         resolutionPreset: activeResolutionPreset,
@@ -387,7 +434,7 @@ function initSettingsModal() {
         canvasBg: canvasBgPicker ? canvasBgPicker.value : '#000000',
         exportFormat: exportFormatSelect ? exportFormatSelect.value : 'mp4',
         videoCodec: videoCodecSelect ? videoCodecSelect.value : 'h264',
-        compression: selectedCompressionRadio ? selectedCompressionRadio.value : 'medium',
+        compression: compVal,
         videoBitrate: videoBitrateRange ? parseInt(videoBitrateRange.value, 10) || 12 : 12,
         exportAudio: exportAudioCheckbox ? exportAudioCheckbox.checked : true,
         audioResolution: audioResolutionSelect ? audioResolutionSelect.value : '192',

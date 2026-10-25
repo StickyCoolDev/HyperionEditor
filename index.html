@@ -2472,6 +2472,12 @@
                 }
             });
 
+            // Update settings modal theme dropdown
+            const settingThemeSelect = document.getElementById('setting-theme');
+            if (settingThemeSelect && settingThemeSelect.value !== themeId) {
+                settingThemeSelect.value = themeId;
+            }
+
             // Flag timeline dirty so canvas re-renders with new theme colors
             state.isDirty = true;
         }
@@ -2517,6 +2523,14 @@
                     setTheme(themeId);
                 });
             });
+
+            // Settings Modal Theme Dropdown
+            const settingThemeSelect = document.getElementById('setting-theme');
+            if (settingThemeSelect) {
+                settingThemeSelect.addEventListener('change', (e) => {
+                    setTheme(e.target.value);
+                });
+            }
         }
 
         // Initialize Timeline, Theme & Zoom UI
@@ -2536,365 +2550,321 @@
     </script>
 
     <!-- Settings Modal Overlay -->
-    <div id="settings-modal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-6 md:p-8">
-        <div class="w-full h-full max-w-5xl max-h-[92vh] bg-[#242424] border border-[#333333] rounded-lg flex flex-col overflow-hidden text-[#f5f5f5]">
+    <div id="settings-modal" class="hidden fixed inset-0 bg-black/75 backdrop-blur-xs z-50 flex items-center justify-center p-3 sm:p-5">
+        <div class="w-full max-w-3xl max-h-[88vh] bg-[var(--panel-bg)] border border-[var(--border-color)] rounded-xl flex flex-col overflow-hidden text-[var(--text-main)] shadow-2xl">
             <!-- Modal Header -->
-            <div class="h-14 bg-[#1a1a1a] border-b border-[#333333] flex items-center justify-between px-4 sm:px-6 shrink-0">
-                <div class="flex items-center gap-3">
-                    <i data-lucide="settings" class="w-5 h-5 text-[#f5f5f5]"></i>
+            <div class="h-13 bg-[var(--header-bg)] border-b border-[var(--border-color)] flex items-center justify-between px-5 shrink-0">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-7 h-7 rounded-md bg-[var(--element-bg)] border border-[var(--border-color)] flex items-center justify-center">
+                        <i data-lucide="sliders" class="w-4 h-4 text-[var(--text-main)]"></i>
+                    </div>
                     <div>
-                        <h2 class="text-sm sm:text-base font-semibold text-[#f5f5f5] leading-tight">Project & Export Settings</h2>
+                        <h2 class="text-sm font-semibold text-[var(--text-main)] leading-tight">Project Settings</h2>
                     </div>
                 </div>
-                <button type="button" id="close-settings-modal" class="icon-btn hover:bg-[#2e2e2e] text-[#a3a3a3] hover:text-[#f5f5f5]" title="Close">
-                    <i data-lucide="x" class="w-5 h-5"></i>
+                <button type="button" id="close-settings-modal" class="icon-btn hover:bg-[var(--element-bg)] text-[var(--text-muted)] hover:text-[var(--text-main)]" title="Close">
+                    <i data-lucide="x" class="w-4 h-4"></i>
                 </button>
             </div>
 
-            <!-- Modal Content (Scrollable & Responsive) -->
+            <!-- Modal Content (Vertical Layout with Sidebar) -->
             <div class="flex-1 flex flex-col md:flex-row min-h-0 overflow-hidden">
-                <!-- Navigation Tabs / Sidebar -->
-                <div class="w-full md:w-56 bg-[#1a1a1a] border-b md:border-b-0 md:border-r border-[#333333] flex md:flex-col shrink-0 p-2 gap-1 overflow-x-auto md:overflow-y-auto">
-                    <button type="button" class="settings-nav-tab flex items-center gap-2.5 px-3 py-2 rounded text-xs font-medium text-left transition-colors whitespace-nowrap bg-[#2e2e2e] text-[#f5f5f5] border border-[#333333]" data-tab="project-tab">
-                        <i data-lucide="monitor" class="w-4 h-4 text-[#a3a3a3]"></i>
-                        <span>Project Resolution</span>
+                <!-- Navigation Sidebar -->
+                <div class="w-full md:w-48 bg-[var(--header-bg)] border-b md:border-b-0 md:border-r border-[var(--border-color)] flex md:flex-col shrink-0 p-2 gap-1 overflow-x-auto md:overflow-y-auto">
+                    <button type="button" class="settings-nav-tab flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium text-left transition-colors whitespace-nowrap bg-[var(--element-bg)] text-[var(--text-main)] border border-[var(--border-color)]" data-tab="project-tab">
+                        <i data-lucide="monitor" class="w-3.5 h-3.5 text-[var(--text-muted)]"></i>
+                        <span>Canvas</span>
                     </button>
-                    <button type="button" class="settings-nav-tab flex items-center gap-2.5 px-3 py-2 rounded text-xs font-medium text-left transition-colors whitespace-nowrap text-[#a3a3a3] hover:text-[#f5f5f5] hover:bg-[#2e2e2e]" data-tab="export-tab">
-                        <i data-lucide="film" class="w-4 h-4 text-[#a3a3a3]"></i>
-                        <span>Export & Compression</span>
+                    <button type="button" class="settings-nav-tab flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium text-left transition-colors whitespace-nowrap text-[var(--text-muted)] hover:text-[var(--text-main)] hover:bg-[var(--element-bg)]" data-tab="export-tab">
+                        <i data-lucide="film" class="w-3.5 h-3.5 text-[var(--text-muted)]"></i>
+                        <span>Export</span>
                     </button>
-                    <button type="button" class="settings-nav-tab flex items-center gap-2.5 px-3 py-2 rounded text-xs font-medium text-left transition-colors whitespace-nowrap text-[#a3a3a3] hover:text-[#f5f5f5] hover:bg-[#2e2e2e]" data-tab="audio-tab">
-                        <i data-lucide="volume-2" class="w-4 h-4 text-[#a3a3a3]"></i>
-                        <span>Audio & Render</span>
+                    <button type="button" class="settings-nav-tab flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium text-left transition-colors whitespace-nowrap text-[var(--text-muted)] hover:text-[var(--text-main)] hover:bg-[var(--element-bg)]" data-tab="audio-tab">
+                        <i data-lucide="volume-2" class="w-3.5 h-3.5 text-[var(--text-muted)]"></i>
+                        <span>Audio</span>
                     </button>
-                    <button type="button" class="settings-nav-tab flex items-center gap-2.5 px-3 py-2 rounded text-xs font-medium text-left transition-colors whitespace-nowrap text-[#a3a3a3] hover:text-[#f5f5f5] hover:bg-[#2e2e2e]" data-tab="theme-tab">
-                        <i data-lucide="palette" class="w-4 h-4 text-[#a3a3a3]"></i>
-                        <span>Appearance & Theme</span>
+                    <button type="button" class="settings-nav-tab flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium text-left transition-colors whitespace-nowrap text-[var(--text-muted)] hover:text-[var(--text-main)] hover:bg-[var(--element-bg)]" data-tab="theme-tab">
+                        <i data-lucide="palette" class="w-3.5 h-3.5 text-[var(--text-muted)]"></i>
+                        <span>Appearance</span>
                     </button>
-                    <button type="button" class="settings-nav-tab flex items-center gap-2.5 px-3 py-2 rounded text-xs font-medium text-left transition-colors whitespace-nowrap text-[#a3a3a3] hover:text-[#f5f5f5] hover:bg-[#2e2e2e]" data-tab="shortcuts-tab">
-                        <i data-lucide="keyboard" class="w-4 h-4 text-[#a3a3a3]"></i>
-                        <span>Keyboard Shortcuts</span>
+                    <button type="button" class="settings-nav-tab flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium text-left transition-colors whitespace-nowrap text-[var(--text-muted)] hover:text-[var(--text-main)] hover:bg-[var(--element-bg)]" data-tab="shortcuts-tab">
+                        <i data-lucide="keyboard" class="w-3.5 h-3.5 text-[var(--text-muted)]"></i>
+                        <span>Shortcuts</span>
                     </button>
                 </div>
 
                 <!-- Tab Panels Container -->
-                <div class="flex-1 p-4 sm:p-6 overflow-y-auto bg-[#242424]">
-                    <form id="settings-form" class="max-w-3xl space-y-6" onsubmit="return false;">
+                <div class="flex-1 p-4 sm:p-5 overflow-y-auto bg-[var(--panel-bg)]">
+                    <form id="settings-form" class="space-y-4" onsubmit="return false;">
                         
-                        <!-- TAB 1: Project Resolution -->
-                        <div id="project-tab" class="settings-tab-panel space-y-5">
-                            <div class="border-b border-[#333333] pb-3">
-                                <h3 class="text-sm font-semibold text-[#f5f5f5] flex items-center gap-2">
-                                    <i data-lucide="monitor" class="w-4 h-4 text-[#a3a3a3]"></i>
-                                    Canvas & Resolution Presets
-                                </h3>
-                                <p class="text-xs text-[#a3a3a3] mt-0.5">Select a predefined resolution preset or enter custom dimensions.</p>
+                        <!-- TAB 1: Project Canvas & Resolution -->
+                        <div id="project-tab" class="settings-tab-panel space-y-3">
+                            <div class="border-b border-[var(--border-color)] pb-2.5">
+                                <h3 class="text-xs font-semibold text-[var(--text-main)] uppercase tracking-wider">Canvas & Dimensions</h3>
+                                <p class="text-[11px] text-[var(--text-muted)] mt-0.5">Control timeline resolution, frame rate and aspect ratio sizing.</p>
                             </div>
 
-                            <!-- Resolution Preset Picker -->
-                            <div class="space-y-2">
-                                <label class="text-xs font-medium text-[#a3a3a3] block uppercase tracking-wider">Resolution Preset</label>
-                                <div class="grid grid-cols-2 sm:grid-cols-3 gap-2.5" id="preset-options-container">
-                                    <button type="button" class="preset-btn bg-[#2e2e2e] border border-[#f5f5f5] p-3 rounded text-left transition-colors" data-preset="1080p" data-w="1920" data-h="1080">
-                                        <div class="text-xs font-medium text-[#f5f5f5]">1080p Full HD</div>
-                                        <div class="text-[11px] text-[#a3a3a3] font-mono mt-0.5">1920 × 1080 (16:9)</div>
-                                    </button>
-                                    <button type="button" class="preset-btn bg-[#2e2e2e] border border-[#333333] hover:border-[#a3a3a3] p-3 rounded text-left transition-colors" data-preset="4k" data-w="3840" data-h="2160">
-                                        <div class="text-xs font-medium text-[#f5f5f5]">4K Ultra HD</div>
-                                        <div class="text-[11px] text-[#a3a3a3] font-mono mt-0.5">3840 × 2160 (16:9)</div>
-                                    </button>
-                                    <button type="button" class="preset-btn bg-[#2e2e2e] border border-[#333333] hover:border-[#a3a3a3] p-3 rounded text-left transition-colors" data-preset="720p" data-w="1280" data-h="720">
-                                        <div class="text-xs font-medium text-[#f5f5f5]">720p HD</div>
-                                        <div class="text-[11px] text-[#a3a3a3] font-mono mt-0.5">1280 × 720 (16:9)</div>
-                                    </button>
-                                    <button type="button" class="preset-btn bg-[#2e2e2e] border border-[#333333] hover:border-[#a3a3a3] p-3 rounded text-left transition-colors" data-preset="vertical_1080p" data-w="1080" data-h="1920">
-                                        <div class="text-xs font-medium text-[#f5f5f5]">Vertical Shorts / Reels</div>
-                                        <div class="text-[11px] text-[#a3a3a3] font-mono mt-0.5">1080 × 1920 (9:16)</div>
-                                    </button>
-                                    <button type="button" class="preset-btn bg-[#2e2e2e] border border-[#333333] hover:border-[#a3a3a3] p-3 rounded text-left transition-colors" data-preset="square_1080p" data-w="1080" data-h="1080">
-                                        <div class="text-xs font-medium text-[#f5f5f5]">Square Feed</div>
-                                        <div class="text-[11px] text-[#a3a3a3] font-mono mt-0.5">1080 × 1080 (1:1)</div>
-                                    </button>
-                                    <button type="button" class="preset-btn bg-[#2e2e2e] border border-[#333333] hover:border-[#a3a3a3] p-3 rounded text-left transition-colors" data-preset="custom" data-w="1920" data-h="1080">
-                                        <div class="text-xs font-medium text-[#f5f5f5]">Custom Dimensions</div>
-                                        <div class="text-[11px] text-[#a3a3a3] font-mono mt-0.5">User defined</div>
-                                    </button>
+                            <!-- Standardized Vertical Menu List -->
+                            <div class="rounded-lg border border-[var(--border-color)] bg-[var(--element-bg)]/20 divide-y divide-[var(--border-color)] overflow-hidden">
+                                <!-- Resolution Row -->
+                                <div class="settings-row flex items-center justify-between py-2.5 px-3.5 hover:bg-[var(--element-bg)]/40 transition-colors">
+                                    <span class="text-xs font-medium text-[var(--text-main)]">Resolution</span>
+                                    <div class="relative">
+                                        <select id="setting-resolution-preset" class="bg-[var(--element-bg)] border border-[var(--border-color)] text-[var(--text-main)] rounded-md px-3 py-1.5 text-xs focus:outline-none focus:border-[var(--border-hover)] pr-8 cursor-pointer appearance-none">
+                                            <option value="1080p">1920 × 1080 (16:9 Full HD)</option>
+                                            <option value="square_1080p">1080 × 1080 (1:1 Square)</option>
+                                            <option value="vertical_1080p">1080 × 1920 (9:16 Vertical)</option>
+                                            <option value="4k">3840 × 2160 (16:9 4K UHD)</option>
+                                            <option value="720p">1280 × 720 (16:9 HD)</option>
+                                            <option value="custom">Custom Dimensions</option>
+                                        </select>
+                                        <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-[var(--text-muted)] absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+                                    </div>
                                 </div>
-                            </div>
 
-                            <!-- Width and Height Inputs -->
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
-                                <div class="space-y-1.5">
-                                    <label for="setting-width" class="text-xs font-medium text-[#a3a3a3] block">Width (px)</label>
-                                    <input type="number" id="setting-width" name="width" min="128" max="7680" value="1920" class="w-full bg-[#2e2e2e] border border-[#333333] text-[#f5f5f5] rounded px-3 py-2 text-sm font-mono focus:outline-none focus:border-[#a3a3a3]">
+                                <!-- FPS Row -->
+                                <div class="settings-row flex items-center justify-between py-2.5 px-3.5 hover:bg-[var(--element-bg)]/40 transition-colors">
+                                    <span class="text-xs font-medium text-[var(--text-main)]">FPS</span>
+                                    <div class="relative">
+                                        <select id="setting-fps" name="fps" class="bg-[var(--element-bg)] border border-[var(--border-color)] text-[var(--text-main)] rounded-md px-3 py-1.5 text-xs focus:outline-none focus:border-[var(--border-hover)] pr-8 cursor-pointer appearance-none min-w-[90px]">
+                                            <option value="24">24</option>
+                                            <option value="25">25</option>
+                                            <option value="29.97">29.97</option>
+                                            <option value="30" selected>30</option>
+                                            <option value="60">60</option>
+                                        </select>
+                                        <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-[var(--text-muted)] absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+                                    </div>
                                 </div>
-                                <div class="space-y-1.5">
-                                    <label for="setting-height" class="text-xs font-medium text-[#a3a3a3] block">Height (px)</label>
-                                    <input type="number" id="setting-height" name="height" min="128" max="7680" value="1080" class="w-full bg-[#2e2e2e] border border-[#333333] text-[#f5f5f5] rounded px-3 py-2 text-sm font-mono focus:outline-none focus:border-[#a3a3a3]">
-                                </div>
-                            </div>
 
-                            <!-- Frame Rate & Canvas Background -->
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                <div class="space-y-1.5">
-                                    <label for="setting-fps" class="text-xs font-medium text-[#a3a3a3] block">Frame Rate (FPS)</label>
-                                    <select id="setting-fps" name="fps" class="w-full bg-[#2e2e2e] border border-[#333333] text-[#f5f5f5] rounded px-3 py-2 text-sm focus:outline-none focus:border-[#a3a3a3]">
-                                        <option value="24">24 FPS (Cinematic)</option>
-                                        <option value="25">25 FPS (PAL)</option>
-                                        <option value="29.97">29.97 FPS (NTSC)</option>
-                                        <option value="30" selected>30 FPS (Standard)</option>
-                                        <option value="60">60 FPS (High Smoothness)</option>
-                                    </select>
+                                <!-- Size Row -->
+                                <div class="settings-row flex items-center justify-between py-2.5 px-3.5 hover:bg-[var(--element-bg)]/40 transition-colors">
+                                    <span class="text-xs font-medium text-[var(--text-main)]">Size</span>
+                                    <div class="flex items-center gap-1.5 text-xs text-[var(--text-muted)] font-mono">
+                                        <span class="text-[var(--text-main)] font-semibold">W:</span>
+                                        <input type="number" id="setting-width" name="width" min="128" max="7680" value="1920" class="w-20 bg-[var(--element-bg)] border border-[var(--border-color)] text-[var(--text-main)] rounded-md px-2.5 py-1 text-xs font-mono focus:outline-none focus:border-[var(--border-hover)] text-center">
+                                        <span class="text-[var(--text-main)] font-semibold ml-2">H:</span>
+                                        <input type="number" id="setting-height" name="height" min="128" max="7680" value="1080" class="w-20 bg-[var(--element-bg)] border border-[var(--border-color)] text-[var(--text-main)] rounded-md px-2.5 py-1 text-xs font-mono focus:outline-none focus:border-[var(--border-hover)] text-center">
+                                    </div>
                                 </div>
-                                <div class="space-y-1.5">
-                                    <label for="setting-canvasBg" class="text-xs font-medium text-[#a3a3a3] block">Canvas Background Color</label>
+
+                                <!-- Canvas Background Row -->
+                                <div class="settings-row flex items-center justify-between py-2.5 px-3.5 hover:bg-[var(--element-bg)]/40 transition-colors">
+                                    <span class="text-xs font-medium text-[var(--text-main)]">Canvas Background</span>
                                     <div class="flex items-center gap-2">
-                                        <input type="color" id="setting-canvasBg" name="canvasBg" value="#000000" class="w-10 h-9 bg-[#2e2e2e] border border-[#333333] rounded cursor-pointer p-0.5">
-                                        <input type="text" id="setting-canvasBg-hex" value="#000000" class="flex-1 bg-[#2e2e2e] border border-[#333333] text-[#f5f5f5] rounded px-3 py-2 text-sm font-mono focus:outline-none focus:border-[#a3a3a3]">
+                                        <input type="color" id="setting-canvasBg" name="canvasBg" value="#000000" class="w-7 h-7 bg-transparent rounded cursor-pointer border border-[var(--border-color)] p-0.5">
+                                        <input type="text" id="setting-canvasBg-hex" value="#000000" class="w-24 bg-[var(--element-bg)] border border-[var(--border-color)] text-[var(--text-main)] rounded-md px-2 py-1 text-xs font-mono focus:outline-none focus:border-[var(--border-hover)] uppercase text-center">
                                     </div>
                                 </div>
                             </div>
                         </div>
 
                         <!-- TAB 2: Export & Compression -->
-                        <div id="export-tab" class="settings-tab-panel hidden space-y-5">
-                            <div class="border-b border-[#333333] pb-3">
-                                <h3 class="text-sm font-semibold text-[#f5f5f5] flex items-center gap-2">
-                                    <i data-lucide="film" class="w-4 h-4 text-[#a3a3a3]"></i>
-                                    Export Format & Compression Options
-                                </h3>
-                                <p class="text-xs text-[#a3a3a3] mt-0.5">Control video format, codec, compression quality and target bitrate.</p>
+                        <div id="export-tab" class="settings-tab-panel hidden space-y-3">
+                            <div class="border-b border-[var(--border-color)] pb-2.5">
+                                <h3 class="text-xs font-semibold text-[var(--text-main)] uppercase tracking-wider">Export & Encoding</h3>
+                                <p class="text-[11px] text-[var(--text-muted)] mt-0.5">Specify video output container, encoding codec, and compression quality.</p>
                             </div>
 
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                <div class="space-y-1.5">
-                                    <label for="setting-exportFormat" class="text-xs font-medium text-[#a3a3a3] block">Container Format</label>
-                                    <select id="setting-exportFormat" name="exportFormat" class="w-full bg-[#2e2e2e] border border-[#333333] text-[#f5f5f5] rounded px-3 py-2 text-sm focus:outline-none focus:border-[#a3a3a3]">
-                                        <option value="mp4">MP4 (.mp4)</option>
-                                        <option value="webm">WebM (.webm)</option>
-                                        <option value="mov">QuickTime (.mov)</option>
-                                        <option value="gif">Animated GIF (.gif)</option>
-                                    </select>
+                            <!-- Standardized Vertical Menu List -->
+                            <div class="rounded-lg border border-[var(--border-color)] bg-[var(--element-bg)]/20 divide-y divide-[var(--border-color)] overflow-hidden">
+                                <!-- Format Row -->
+                                <div class="settings-row flex items-center justify-between py-2.5 px-3.5 hover:bg-[var(--element-bg)]/40 transition-colors">
+                                    <span class="text-xs font-medium text-[var(--text-main)]">Container Format</span>
+                                    <div class="relative">
+                                        <select id="setting-exportFormat" name="exportFormat" class="bg-[var(--element-bg)] border border-[var(--border-color)] text-[var(--text-main)] rounded-md px-3 py-1.5 text-xs focus:outline-none focus:border-[var(--border-hover)] pr-8 cursor-pointer appearance-none min-w-[140px]">
+                                            <option value="mp4">MP4 (.mp4)</option>
+                                            <option value="webm">WebM (.webm)</option>
+                                            <option value="mov">QuickTime (.mov)</option>
+                                            <option value="gif">Animated GIF (.gif)</option>
+                                        </select>
+                                        <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-[var(--text-muted)] absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+                                    </div>
                                 </div>
 
-                                <div class="space-y-1.5">
-                                    <label for="setting-videoCodec" class="text-xs font-medium text-[#a3a3a3] block">Video Codec</label>
-                                    <select id="setting-videoCodec" name="videoCodec" class="w-full bg-[#2e2e2e] border border-[#333333] text-[#f5f5f5] rounded px-3 py-2 text-sm focus:outline-none focus:border-[#a3a3a3]">
-                                        <option value="h264">H.264 / AVC (Broad compatibility)</option>
-                                        <option value="h265">H.265 / HEVC (High efficiency)</option>
-                                        <option value="vp9">VP9 (Web standard)</option>
-                                        <option value="av1">AV1 (Next-gen open codec)</option>
-                                    </select>
+                                <!-- Codec Row -->
+                                <div class="settings-row flex items-center justify-between py-2.5 px-3.5 hover:bg-[var(--element-bg)]/40 transition-colors">
+                                    <span class="text-xs font-medium text-[var(--text-main)]">Video Codec</span>
+                                    <div class="relative">
+                                        <select id="setting-videoCodec" name="videoCodec" class="bg-[var(--element-bg)] border border-[var(--border-color)] text-[var(--text-main)] rounded-md px-3 py-1.5 text-xs focus:outline-none focus:border-[var(--border-hover)] pr-8 cursor-pointer appearance-none min-w-[180px]">
+                                            <option value="h264">H.264 / AVC (Standard)</option>
+                                            <option value="h265">H.265 / HEVC</option>
+                                            <option value="vp9">VP9 (Web)</option>
+                                            <option value="av1">AV1 (Next-Gen)</option>
+                                        </select>
+                                        <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-[var(--text-muted)] absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+                                    </div>
                                 </div>
-                            </div>
 
-                            <div class="space-y-2">
-                                <label class="text-xs font-medium text-[#a3a3a3] block uppercase tracking-wider">Compression Mode</label>
-                                <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-                                    <label class="compression-option cursor-pointer bg-[#2e2e2e] border border-[#333333] hover:border-[#a3a3a3] p-3 rounded flex items-start gap-2.5">
-                                        <input type="radio" name="compression" value="high" class="mt-0.5 accent-[#f5f5f5]">
-                                        <div>
-                                            <div class="text-xs font-medium text-[#f5f5f5]">High Quality</div>
-                                            <div class="text-[11px] text-[#a3a3a3] mt-0.5">Visually lossless, larger size</div>
-                                        </div>
-                                    </label>
-                                    <label class="compression-option cursor-pointer bg-[#2e2e2e] border border-[#333333] hover:border-[#a3a3a3] p-3 rounded flex items-start gap-2.5">
-                                        <input type="radio" name="compression" value="medium" checked class="mt-0.5 accent-[#f5f5f5]">
-                                        <div>
-                                            <div class="text-xs font-medium text-[#f5f5f5]">Standard (Balanced)</div>
-                                            <div class="text-[11px] text-[#a3a3a3] mt-0.5">Optimal quality to size ratio</div>
-                                        </div>
-                                    </label>
-                                    <label class="compression-option cursor-pointer bg-[#2e2e2e] border border-[#333333] hover:border-[#a3a3a3] p-3 rounded flex items-start gap-2.5">
-                                        <input type="radio" name="compression" value="fast" class="mt-0.5 accent-[#f5f5f5]">
-                                        <div>
-                                            <div class="text-xs font-medium text-[#f5f5f5]">Fast Compression</div>
-                                            <div class="text-[11px] text-[#a3a3a3] mt-0.5">Smaller file, fast encode</div>
-                                        </div>
-                                    </label>
+                                <!-- Compression Row -->
+                                <div class="settings-row flex items-center justify-between py-2.5 px-3.5 hover:bg-[var(--element-bg)]/40 transition-colors">
+                                    <span class="text-xs font-medium text-[var(--text-main)]">Compression</span>
+                                    <div class="relative">
+                                        <select id="setting-compression" name="compression" class="bg-[var(--element-bg)] border border-[var(--border-color)] text-[var(--text-main)] rounded-md px-3 py-1.5 text-xs focus:outline-none focus:border-[var(--border-hover)] pr-8 cursor-pointer appearance-none min-w-[180px]">
+                                            <option value="medium">Standard (Balanced)</option>
+                                            <option value="high">High Quality (Lossless)</option>
+                                            <option value="fast">Fast (Smaller File)</option>
+                                        </select>
+                                        <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-[var(--text-muted)] absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+                                    </div>
                                 </div>
-                            </div>
 
-                            <div class="space-y-2 pt-2">
-                                <div class="flex justify-between items-center text-xs">
-                                    <label for="setting-videoBitrate" class="font-medium text-[#a3a3a3]">Target Video Bitrate (Mbps)</label>
-                                    <span id="bitrate-val-display" class="font-mono text-[#f5f5f5]">12 Mbps</span>
+                                <!-- Bitrate Row -->
+                                <div class="settings-row flex items-center justify-between py-2.5 px-3.5 hover:bg-[var(--element-bg)]/40 transition-colors">
+                                    <span class="text-xs font-medium text-[var(--text-main)]">Target Bitrate</span>
+                                    <div class="flex items-center gap-3">
+                                        <input type="range" id="setting-videoBitrate" name="videoBitrate" min="2" max="50" step="1" value="12" class="w-28 sm:w-36 bg-[var(--element-bg)] h-1.5 rounded-lg appearance-none cursor-pointer accent-[var(--accent-bg)]">
+                                        <span id="bitrate-val-display" class="font-mono text-xs text-[var(--text-main)] w-14 text-right">12 Mbps</span>
+                                    </div>
                                 </div>
-                                <input type="range" id="setting-videoBitrate" name="videoBitrate" min="2" max="50" step="1" value="12" class="w-full bg-[#1a1a1a] h-1.5 rounded-lg appearance-none cursor-pointer accent-[#f5f5f5]">
-                                <div class="flex justify-between text-[10px] text-[#a3a3a3] font-mono">
-                                    <span>2 Mbps</span>
-                                    <span>25 Mbps</span>
-                                    <span>50 Mbps</span>
+
+                                <!-- Fast Start Row -->
+                                <div class="settings-row flex items-center justify-between py-2.5 px-3.5 hover:bg-[var(--element-bg)]/40 transition-colors">
+                                    <span class="text-xs font-medium text-[var(--text-main)]">Fast Start (Web MOOV)</span>
+                                    <label class="relative inline-flex items-center cursor-pointer">
+                                        <input type="checkbox" id="setting-fastStart" name="fastStart" checked class="sr-only peer">
+                                        <div class="w-8 h-4.5 bg-[var(--element-bg)] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3.5 after:w-3.5 after:transition-all peer-checked:bg-emerald-500 border border-[var(--border-color)]"></div>
+                                    </label>
                                 </div>
                             </div>
                         </div>
 
                         <!-- TAB 3: Audio & Advanced -->
-                        <div id="audio-tab" class="settings-tab-panel hidden space-y-5">
-                            <div class="border-b border-[#333333] pb-3">
-                                <h3 class="text-sm font-semibold text-[#f5f5f5] flex items-center gap-2">
-                                    <i data-lucide="volume-2" class="w-4 h-4 text-[#a3a3a3]"></i>
-                                    Audio Quality & Render Acceleration
-                                </h3>
-                                <p class="text-xs text-[#a3a3a3] mt-0.5">Adjust audio sample rate, bitrate and playback optimization options.</p>
+                        <div id="audio-tab" class="settings-tab-panel hidden space-y-3">
+                            <div class="border-b border-[var(--border-color)] pb-2.5">
+                                <h3 class="text-xs font-semibold text-[var(--text-main)] uppercase tracking-wider">Audio Output</h3>
+                                <p class="text-[11px] text-[var(--text-muted)] mt-0.5">Configure audio stream inclusion, bitrate and sample rate frequency.</p>
                             </div>
 
-                            <div class="flex items-center justify-between p-3 bg-[#2e2e2e] border border-[#333333] rounded">
-                                <div>
-                                    <div class="text-xs font-medium text-[#f5f5f5]">Include Audio Stream</div>
-                                    <div class="text-[11px] text-[#a3a3a3]">Export audio tracks together with video timeline</div>
-                                </div>
-                                <input type="checkbox" id="setting-exportAudio" name="exportAudio" checked class="w-4 h-4 rounded border-[#333333] bg-[#1a1a1a] accent-[#f5f5f5] cursor-pointer">
-                            </div>
-
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                <div class="space-y-1.5">
-                                    <label for="setting-audioResolution" class="text-xs font-medium text-[#a3a3a3] block">Audio Bitrate / Quality</label>
-                                    <select id="setting-audioResolution" name="audioResolution" class="w-full bg-[#2e2e2e] border border-[#333333] text-[#f5f5f5] rounded px-3 py-2 text-sm focus:outline-none focus:border-[#a3a3a3]">
-                                        <option value="320">320 kbps (Studio High Quality)</option>
-                                        <option value="256">256 kbps (High Quality)</option>
-                                        <option value="192" selected>192 kbps (Standard AAC)</option>
-                                        <option value="128">128 kbps (Compact)</option>
-                                    </select>
+                            <!-- Standardized Vertical Menu List -->
+                            <div class="rounded-lg border border-[var(--border-color)] bg-[var(--element-bg)]/20 divide-y divide-[var(--border-color)] overflow-hidden">
+                                <!-- Audio Stream Row -->
+                                <div class="settings-row flex items-center justify-between py-2.5 px-3.5 hover:bg-[var(--element-bg)]/40 transition-colors">
+                                    <span class="text-xs font-medium text-[var(--text-main)]">Include Audio Stream</span>
+                                    <label class="relative inline-flex items-center cursor-pointer">
+                                        <input type="checkbox" id="setting-exportAudio" name="exportAudio" checked class="sr-only peer">
+                                        <div class="w-8 h-4.5 bg-[var(--element-bg)] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3.5 after:w-3.5 after:transition-all peer-checked:bg-emerald-500 border border-[var(--border-color)]"></div>
+                                    </label>
                                 </div>
 
-                                <div class="space-y-1.5">
-                                    <label for="setting-audioSampleRate" class="text-xs font-medium text-[#a3a3a3] block">Audio Sample Rate</label>
-                                    <select id="setting-audioSampleRate" name="audioSampleRate" class="w-full bg-[#2e2e2e] border border-[#333333] text-[#f5f5f5] rounded px-3 py-2 text-sm focus:outline-none focus:border-[#a3a3a3]">
-                                        <option value="48000" selected>48.0 kHz (Video Standard)</option>
-                                        <option value="44100">44.1 kHz (CD Audio)</option>
-                                        <option value="96000">96.0 kHz (Hi-Res Audio)</option>
-                                    </select>
+                                <!-- Bitrate Row -->
+                                <div class="settings-row flex items-center justify-between py-2.5 px-3.5 hover:bg-[var(--element-bg)]/40 transition-colors">
+                                    <span class="text-xs font-medium text-[var(--text-main)]">Audio Bitrate</span>
+                                    <div class="relative">
+                                        <select id="setting-audioResolution" name="audioResolution" class="bg-[var(--element-bg)] border border-[var(--border-color)] text-[var(--text-main)] rounded-md px-3 py-1.5 text-xs focus:outline-none focus:border-[var(--border-hover)] pr-8 cursor-pointer appearance-none min-w-[160px]">
+                                            <option value="320">320 kbps (Studio)</option>
+                                            <option value="256">256 kbps (High)</option>
+                                            <option value="192" selected>192 kbps (Standard AAC)</option>
+                                            <option value="128">128 kbps (Compact)</option>
+                                        </select>
+                                        <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-[var(--text-muted)] absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+                                    </div>
                                 </div>
-                            </div>
 
-                            <div class="flex items-center justify-between p-3 bg-[#2e2e2e] border border-[#333333] rounded">
-                                <div>
-                                    <div class="text-xs font-medium text-[#f5f5f5]">Fast Start (Web Fast Start)</div>
-                                    <div class="text-[11px] text-[#a3a3a3]">Move MOOV atom to header for instant web playback</div>
+                                <!-- Sample Rate Row -->
+                                <div class="settings-row flex items-center justify-between py-2.5 px-3.5 hover:bg-[var(--element-bg)]/40 transition-colors">
+                                    <span class="text-xs font-medium text-[var(--text-main)]">Sample Rate</span>
+                                    <div class="relative">
+                                        <select id="setting-audioSampleRate" name="audioSampleRate" class="bg-[var(--element-bg)] border border-[var(--border-color)] text-[var(--text-main)] rounded-md px-3 py-1.5 text-xs focus:outline-none focus:border-[var(--border-hover)] pr-8 cursor-pointer appearance-none min-w-[160px]">
+                                            <option value="48000" selected>48.0 kHz (Standard)</option>
+                                            <option value="44100">44.1 kHz (CD Audio)</option>
+                                            <option value="96000">96.0 kHz (Hi-Res)</option>
+                                        </select>
+                                        <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-[var(--text-muted)] absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+                                    </div>
                                 </div>
-                                <input type="checkbox" id="setting-fastStart" name="fastStart" checked class="w-4 h-4 rounded border-[#333333] bg-[#1a1a1a] accent-[#f5f5f5] cursor-pointer">
                             </div>
                         </div>
 
                         <!-- TAB 4: Theme & Appearance -->
-                        <div id="theme-tab" class="settings-tab-panel hidden space-y-5">
-                            <div class="border-b border-[var(--border-color)] pb-3">
-                                <h3 class="text-sm font-semibold text-[var(--text-main)] flex items-center gap-2">
-                                    <i data-lucide="palette" class="w-4 h-4 text-[var(--text-muted)]"></i>
-                                    Colour Theme Selection
-                                </h3>
-                                <p class="text-xs text-[var(--text-muted)] mt-0.5">Select a tailored visual theme for your editing workstation. Changes apply instantly.</p>
+                        <div id="theme-tab" class="settings-tab-panel hidden space-y-3">
+                            <div class="border-b border-[var(--border-color)] pb-2.5">
+                                <h3 class="text-xs font-semibold text-[var(--text-main)] uppercase tracking-wider">Appearance & Theme</h3>
+                                <p class="text-[11px] text-[var(--text-muted)] mt-0.5">Customize your editor workspace color scheme and visual atmosphere.</p>
                             </div>
 
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5" id="settings-theme-cards">
-                                <!-- Default Dark Card -->
-                                <div class="theme-card cursor-pointer p-3.5 rounded-lg border-2 border-[var(--border-color)] hover:border-[var(--border-hover)] bg-[var(--element-bg)] transition-all relative" data-theme-id="default-dark">
-                                    <div class="flex items-center justify-between mb-2">
-                                        <div class="flex items-center gap-2 font-semibold text-xs text-[var(--text-main)]">
-                                            <span class="w-3.5 h-3.5 rounded-full bg-[#1a1a1a] border border-[#555] shrink-0"></span>
-                                            <span>Default Dark</span>
-                                        </div>
-                                        <span class="text-[10px] uppercase font-mono px-1.5 py-0.5 rounded bg-black/40 text-[var(--text-muted)]">Default</span>
-                                    </div>
-                                    <p class="text-[11px] text-[var(--text-muted)] mb-3">Classic charcoal dark theme optimized for studio editing sessions.</p>
-                                    <div class="h-6 rounded bg-[#1a1a1a] border border-[#333] flex items-center justify-between px-2">
-                                        <span class="text-[10px] text-[#f5f5f5]">Timeline Canvas</span>
-                                        <span class="text-[9px] text-[#a3a3a3] font-mono">#1A1A1A</span>
-                                    </div>
-                                </div>
-
-                                <!-- White Mode Card -->
-                                <div class="theme-card cursor-pointer p-3.5 rounded-lg border-2 border-[var(--border-color)] hover:border-[var(--border-hover)] bg-[var(--element-bg)] transition-all relative" data-theme-id="white-mode">
-                                    <div class="flex items-center justify-between mb-2">
-                                        <div class="flex items-center gap-2 font-semibold text-xs text-[var(--text-main)]">
-                                            <span class="w-3.5 h-3.5 rounded-full bg-[#f8f9fa] border border-[#ccc] shrink-0"></span>
-                                            <span>White Mode</span>
-                                        </div>
-                                        <span class="text-[10px] uppercase font-mono px-1.5 py-0.5 rounded bg-black/40 text-[var(--text-muted)]">Light</span>
-                                    </div>
-                                    <p class="text-[11px] text-[var(--text-muted)] mb-3">High-contrast, clean white theme for well-lit workspaces and day editing.</p>
-                                    <div class="h-6 rounded bg-[#f8f9fa] border border-[#e2e8f0] flex items-center justify-between px-2">
-                                        <span class="text-[10px] text-[#0f172a]">Timeline Canvas</span>
-                                        <span class="text-[9px] text-[#64748b] font-mono">#F8F9FA</span>
+                            <!-- Standardized Vertical Menu List -->
+                            <div class="rounded-lg border border-[var(--border-color)] bg-[var(--element-bg)]/20 divide-y divide-[var(--border-color)] overflow-hidden">
+                                <!-- Theme Dropdown Row -->
+                                <div class="settings-row flex items-center justify-between py-2.5 px-3.5 hover:bg-[var(--element-bg)]/40 transition-colors">
+                                    <span class="text-xs font-medium text-[var(--text-main)]">Active Theme</span>
+                                    <div class="relative">
+                                        <select id="setting-theme" class="bg-[var(--element-bg)] border border-[var(--border-color)] text-[var(--text-main)] rounded-md px-3 py-1.5 text-xs focus:outline-none focus:border-[var(--border-hover)] pr-8 cursor-pointer appearance-none min-w-[160px]">
+                                            <option value="default-dark">Default Dark</option>
+                                            <option value="white-mode">White Mode</option>
+                                            <option value="purple-mode">Purple-ish Mode</option>
+                                            <option value="github-dark">GitHub Dark Mode</option>
+                                        </select>
+                                        <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-[var(--text-muted)] absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none"></i>
                                     </div>
                                 </div>
 
-                                <!-- Purple-ish Mode Card -->
-                                <div class="theme-card cursor-pointer p-3.5 rounded-lg border-2 border-[var(--border-color)] hover:border-[var(--border-hover)] bg-[var(--element-bg)] transition-all relative" data-theme-id="purple-mode">
-                                    <div class="flex items-center justify-between mb-2">
-                                        <div class="flex items-center gap-2 font-semibold text-xs text-[var(--text-main)]">
-                                            <span class="w-3.5 h-3.5 rounded-full bg-[#2c184d] border border-[#a855f7] shrink-0"></span>
-                                            <span>Purple-ish Mode</span>
-                                        </div>
-                                        <span class="text-[10px] uppercase font-mono px-1.5 py-0.5 rounded bg-black/40 text-[#c084fc]">Vibrant</span>
-                                    </div>
-                                    <p class="text-[11px] text-[var(--text-muted)] mb-3">Neon cyberpunk purple theme designed for creative visual artists.</p>
-                                    <div class="h-6 rounded bg-[#120924] border border-[#4c1d95] flex items-center justify-between px-2">
-                                        <span class="text-[10px] text-[#f3e8ff]">Timeline Canvas</span>
-                                        <span class="text-[9px] text-[#c084fc] font-mono">#120924</span>
-                                    </div>
-                                </div>
-
-                                <!-- GitHub Dark Mode Card -->
-                                <div class="theme-card cursor-pointer p-3.5 rounded-lg border-2 border-[var(--border-color)] hover:border-[var(--border-hover)] bg-[var(--element-bg)] transition-all relative" data-theme-id="github-dark">
-                                    <div class="flex items-center justify-between mb-2">
-                                        <div class="flex items-center gap-2 font-semibold text-xs text-[var(--text-main)]">
-                                            <span class="w-3.5 h-3.5 rounded-full bg-[#0d1117] border border-[#30363d] shrink-0"></span>
-                                            <span>GitHub Dark Mode</span>
-                                        </div>
-                                        <span class="text-[10px] uppercase font-mono px-1.5 py-0.5 rounded bg-black/40 text-[#58a6ff]">Developer</span>
-                                    </div>
-                                    <p class="text-[11px] text-[var(--text-muted)] mb-3">Sleek GitHub slate dark aesthetic with distinct slate borders and accents.</p>
-                                    <div class="h-6 rounded bg-[#0d1117] border border-[#30363d] flex items-center justify-between px-2">
-                                        <span class="text-[10px] text-[#c9d1d9]">Timeline Canvas</span>
-                                        <span class="text-[9px] text-[#8b949e] font-mono">#0D1117</span>
+                                <!-- Theme Swatches Quick Row -->
+                                <div class="settings-row flex items-center justify-between py-2.5 px-3.5 hover:bg-[var(--element-bg)]/40 transition-colors">
+                                    <span class="text-xs font-medium text-[var(--text-main)]">Quick Theme Switch</span>
+                                    <div class="flex items-center gap-2">
+                                        <button type="button" class="theme-card flex items-center gap-1.5 px-2 py-1 rounded text-xs bg-[#1a1a1a] text-[#f5f5f5] border border-[#444] hover:border-white transition-all cursor-pointer" data-theme-id="default-dark" title="Default Dark">
+                                            <span class="w-2.5 h-2.5 rounded-full bg-[#1a1a1a] border border-[#666]"></span>
+                                            <span class="text-[11px]">Dark</span>
+                                        </button>
+                                        <button type="button" class="theme-card flex items-center gap-1.5 px-2 py-1 rounded text-xs bg-[#f8f9fa] text-[#0f172a] border border-[#ccc] hover:border-blue-600 transition-all cursor-pointer" data-theme-id="white-mode" title="White Mode">
+                                            <span class="w-2.5 h-2.5 rounded-full bg-[#ffffff] border border-[#999]"></span>
+                                            <span class="text-[11px]">White</span>
+                                        </button>
+                                        <button type="button" class="theme-card flex items-center gap-1.5 px-2 py-1 rounded text-xs bg-[#2c184d] text-[#f3e8ff] border border-[#a855f7] hover:border-fuchsia-400 transition-all cursor-pointer" data-theme-id="purple-mode" title="Purple-ish Mode">
+                                            <span class="w-2.5 h-2.5 rounded-full bg-[#a855f7]"></span>
+                                            <span class="text-[11px]">Purple</span>
+                                        </button>
+                                        <button type="button" class="theme-card flex items-center gap-1.5 px-2 py-1 rounded text-xs bg-[#0d1117] text-[#c9d1d9] border border-[#30363d] hover:border-blue-400 transition-all cursor-pointer" data-theme-id="github-dark" title="GitHub Dark Mode">
+                                            <span class="w-2.5 h-2.5 rounded-full bg-[#58a6ff]"></span>
+                                            <span class="text-[11px]">GitHub</span>
+                                        </button>
                                     </div>
                                 </div>
                             </div>
                         </div>
 
                         <!-- TAB 5: Shortcuts -->
-                        <div id="shortcuts-tab" class="settings-tab-panel hidden space-y-5">
-                            <div class="border-b border-[#333333] pb-3">
-                                <h3 class="text-sm font-semibold text-[#f5f5f5] flex items-center gap-2">
-                                    <i data-lucide="keyboard" class="w-4 h-4 text-[#a3a3a3]"></i>
-                                    Keyboard Shortcuts
-                                </h3>
-                                <p class="text-xs text-[#a3a3a3] mt-1">Professional editing shortcuts to speed up your workflow.</p>
+                        <div id="shortcuts-tab" class="settings-tab-panel hidden space-y-3">
+                            <div class="border-b border-[var(--border-color)] pb-2.5">
+                                <h3 class="text-xs font-semibold text-[var(--text-main)] uppercase tracking-wider">Keyboard Shortcuts</h3>
+                                <p class="text-[11px] text-[var(--text-muted)] mt-0.5">Quick reference for essential editing keystrokes.</p>
                             </div>
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div class="bg-[#1a1a1a] p-3 rounded-lg border border-[#333333] flex justify-between items-center">
-                                    <div class="text-xs font-medium text-[#f5f5f5]">Play / Pause</div>
-                                    <div class="flex gap-1"><kbd class="px-2 py-1 bg-[#2e2e2e] border border-[#333333] rounded text-[10px] text-[#f5f5f5] font-mono">Space</kbd></div>
+
+                            <!-- Standardized Vertical Menu List -->
+                            <div class="rounded-lg border border-[var(--border-color)] bg-[var(--element-bg)]/20 divide-y divide-[var(--border-color)] overflow-hidden">
+                                <div class="settings-row flex items-center justify-between py-2 px-3.5 hover:bg-[var(--element-bg)]/40 transition-colors">
+                                    <span class="text-xs font-medium text-[var(--text-main)]">Play / Pause</span>
+                                    <kbd class="px-2 py-0.5 bg-[var(--element-bg)] border border-[var(--border-color)] rounded text-[11px] text-[var(--text-main)] font-mono shadow-xs">Space</kbd>
                                 </div>
-                                <div class="bg-[#1a1a1a] p-3 rounded-lg border border-[#333333] flex justify-between items-center">
-                                    <div class="text-xs font-medium text-[#f5f5f5]">Undo</div>
-                                    <div class="flex gap-1"><kbd class="px-2 py-1 bg-[#2e2e2e] border border-[#333333] rounded text-[10px] text-[#f5f5f5] font-mono">Ctrl</kbd><span class="text-[#a3a3a3] text-xs">+</span><kbd class="px-2 py-1 bg-[#2e2e2e] border border-[#333333] rounded text-[10px] text-[#f5f5f5] font-mono">Z</kbd></div>
+                                <div class="settings-row flex items-center justify-between py-2 px-3.5 hover:bg-[var(--element-bg)]/40 transition-colors">
+                                    <span class="text-xs font-medium text-[var(--text-main)]">Split Block at Playhead</span>
+                                    <kbd class="px-2 py-0.5 bg-[var(--element-bg)] border border-[var(--border-color)] rounded text-[11px] text-[var(--text-main)] font-mono shadow-xs">S</kbd>
                                 </div>
-                                <div class="bg-[#1a1a1a] p-3 rounded-lg border border-[#333333] flex justify-between items-center">
-                                    <div class="text-xs font-medium text-[#f5f5f5]">Redo</div>
-                                    <div class="flex gap-1"><kbd class="px-2 py-1 bg-[#2e2e2e] border border-[#333333] rounded text-[10px] text-[#f5f5f5] font-mono">Ctrl</kbd><span class="text-[#a3a3a3] text-xs">+</span><kbd class="px-2 py-1 bg-[#2e2e2e] border border-[#333333] rounded text-[10px] text-[#f5f5f5] font-mono">Y</kbd></div>
+                                <div class="settings-row flex items-center justify-between py-2 px-3.5 hover:bg-[var(--element-bg)]/40 transition-colors">
+                                    <span class="text-xs font-medium text-[var(--text-main)]">Undo / Redo</span>
+                                    <div class="flex items-center gap-1 font-mono text-[11px]">
+                                        <kbd class="px-1.5 py-0.5 bg-[var(--element-bg)] border border-[var(--border-color)] rounded text-[var(--text-main)]">Ctrl+Z</kbd>
+                                        <span class="text-[var(--text-muted)]">/</span>
+                                        <kbd class="px-1.5 py-0.5 bg-[var(--element-bg)] border border-[var(--border-color)] rounded text-[var(--text-main)]">Ctrl+Y</kbd>
+                                    </div>
                                 </div>
-                                <div class="bg-[#1a1a1a] p-3 rounded-lg border border-[#333333] flex justify-between items-center">
-                                    <div class="text-xs font-medium text-[#f5f5f5]">Delete Selected Clip</div>
-                                    <div class="flex gap-1"><kbd class="px-2 py-1 bg-[#2e2e2e] border border-[#333333] rounded text-[10px] text-[#f5f5f5] font-mono">Backspace</kbd></div>
+                                <div class="settings-row flex items-center justify-between py-2 px-3.5 hover:bg-[var(--element-bg)]/40 transition-colors">
+                                    <span class="text-xs font-medium text-[var(--text-main)]">Delete Selected Clip</span>
+                                    <kbd class="px-2 py-0.5 bg-[var(--element-bg)] border border-[var(--border-color)] rounded text-[11px] text-[var(--text-main)] font-mono shadow-xs">Backspace</kbd>
                                 </div>
-                                <div class="bg-[#1a1a1a] p-3 rounded-lg border border-[#333333] flex justify-between items-center">
-                                    <div class="text-xs font-medium text-[#f5f5f5]">Move Left (Fine)</div>
-                                    <div class="flex gap-1"><kbd class="px-2 py-1 bg-[#2e2e2e] border border-[#333333] rounded text-[10px] text-[#f5f5f5] font-mono">Left Arrow</kbd></div>
+                                <div class="settings-row flex items-center justify-between py-2 px-3.5 hover:bg-[var(--element-bg)]/40 transition-colors">
+                                    <span class="text-xs font-medium text-[var(--text-main)]">Nudge Playhead</span>
+                                    <div class="flex items-center gap-1 font-mono text-[11px]">
+                                        <kbd class="px-1.5 py-0.5 bg-[var(--element-bg)] border border-[var(--border-color)] rounded text-[var(--text-main)]">←</kbd>
+                                        <kbd class="px-1.5 py-0.5 bg-[var(--element-bg)] border border-[var(--border-color)] rounded text-[var(--text-main)]">→</kbd>
+                                    </div>
                                 </div>
-                                <div class="bg-[#1a1a1a] p-3 rounded-lg border border-[#333333] flex justify-between items-center">
-                                    <div class="text-xs font-medium text-[#f5f5f5]">Move Right (Fine)</div>
-                                    <div class="flex gap-1"><kbd class="px-2 py-1 bg-[#2e2e2e] border border-[#333333] rounded text-[10px] text-[#f5f5f5] font-mono">Right Arrow</kbd></div>
-                                </div>
-                                <div class="bg-[#1a1a1a] p-3 rounded-lg border border-[#333333] flex justify-between items-center">
-                                    <div class="text-xs font-medium text-[#f5f5f5]">Move Left (Coarse)</div>
-                                    <div class="flex gap-1"><kbd class="px-2 py-1 bg-[#2e2e2e] border border-[#333333] rounded text-[10px] text-[#f5f5f5] font-mono">Shift</kbd><span class="text-[#a3a3a3] text-xs">+</span><kbd class="px-2 py-1 bg-[#2e2e2e] border border-[#333333] rounded text-[10px] text-[#f5f5f5] font-mono">Left Arrow</kbd></div>
-                                </div>
-                                <div class="bg-[#1a1a1a] p-3 rounded-lg border border-[#333333] flex justify-between items-center">
-                                    <div class="text-xs font-medium text-[#f5f5f5]">Move Right (Coarse)</div>
-                                    <div class="flex gap-1"><kbd class="px-2 py-1 bg-[#2e2e2e] border border-[#333333] rounded text-[10px] text-[#f5f5f5] font-mono">Shift</kbd><span class="text-[#a3a3a3] text-xs">+</span><kbd class="px-2 py-1 bg-[#2e2e2e] border border-[#333333] rounded text-[10px] text-[#f5f5f5] font-mono">Right Arrow</kbd></div>
+                                <div class="settings-row flex items-center justify-between py-2 px-3.5 hover:bg-[var(--element-bg)]/40 transition-colors">
+                                    <span class="text-xs font-medium text-[var(--text-main)]">Fast Scrub (Coarse)</span>
+                                    <div class="flex items-center gap-1 font-mono text-[11px]">
+                                        <kbd class="px-1.5 py-0.5 bg-[var(--element-bg)] border border-[var(--border-color)] rounded text-[var(--text-main)]">Shift + ← / →</kbd>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -2904,16 +2874,16 @@
             </div>
 
             <!-- Modal Footer -->
-            <div class="h-14 bg-[#1a1a1a] border-t border-[#333333] flex items-center justify-between px-4 sm:px-6 shrink-0">
-                <button type="button" id="reset-settings-btn" class="flex items-center gap-1.5 text-xs text-[#a3a3a3] hover:text-[#f5f5f5] transition-colors py-1.5 px-2.5 rounded hover:bg-[#2e2e2e]">
+            <div class="h-12 bg-[var(--header-bg)] border-t border-[var(--border-color)] flex items-center justify-between px-5 shrink-0">
+                <button type="button" id="reset-settings-btn" class="flex items-center gap-1.5 text-xs text-[var(--text-muted)] hover:text-[var(--text-main)] transition-colors py-1.5 px-2 rounded-md hover:bg-[var(--element-bg)] cursor-pointer">
                     <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>
                     <span>Reset Defaults</span>
                 </button>
                 <div class="flex items-center gap-2">
-                    <button type="button" id="cancel-settings-btn" class="px-3.5 py-1.5 rounded text-xs text-[#a3a3a3] hover:text-[#f5f5f5] hover:bg-[#2e2e2e] border border-[#333333] transition-colors">
+                    <button type="button" id="cancel-settings-btn" class="px-3.5 py-1.5 rounded-md text-xs text-[var(--text-muted)] hover:text-[var(--text-main)] hover:bg-[var(--element-bg)] border border-[var(--border-color)] transition-colors cursor-pointer">
                         Cancel
                     </button>
-                    <button type="button" id="save-settings-btn" class="flex items-center gap-1.5 bg-[#f5f5f5] text-[#1a1a1a] hover:bg-[#d4d4d4] font-medium px-4 py-1.5 rounded text-xs transition-colors">
+                    <button type="button" id="save-settings-btn" class="flex items-center gap-1.5 bg-[var(--accent-bg)] text-[var(--accent-fg)] hover:opacity-90 font-medium px-4 py-1.5 rounded-md text-xs transition-colors cursor-pointer">
                         <i data-lucide="check" class="w-3.5 h-3.5"></i>
                         <span id="save-btn-text">Save Settings</span>
                     </button>
