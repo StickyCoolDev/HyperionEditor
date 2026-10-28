@@ -5,9 +5,28 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Hyperion Editor</title>
+    <!-- Satoshi Typography & App Styles -->
+    <link rel="preload" href="./fonts/Satoshi-Variable.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="preload" href="./fonts/Satoshi-Regular.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="preload" href="./fonts/Satoshi-Medium.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="preload" href="./fonts/Satoshi-Bold.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="stylesheet" href="./style.css">
+
     <!-- Cross-Origin Isolation Service Worker for static CDNs / hosts -->
     <script src="./coi-serviceworker.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Satoshi', 'ui-sans-serif', 'system-ui', '-apple-system', 'BlinkMacSystemFont', '"Segoe UI"', 'Roboto', 'sans-serif'],
+                        satoshi: ['Satoshi', 'sans-serif'],
+                    }
+                }
+            }
+        };
+    </script>
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/dexie@latest/dist/dexie.js"></script>
     <script src="./db.js" defer></script>
@@ -105,7 +124,7 @@
             background-color: var(--bg-main) !important;
             color: var(--text-main) !important;
             overflow: hidden;
-            font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            font-family: 'Satoshi', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
             transition: background-color 0.25s ease, color 0.25s ease;
             * { box-shadow: none !important; }
         }
@@ -393,12 +412,12 @@
     </section>
 
     <!-- Track Action Context Menu Popup -->
-    <div id="track-context-menu" class="hidden fixed z-50 bg-[#242424] border border-[#333333] rounded-md p-1.5 flex flex-col gap-1 min-w-[150px] text-xs text-[#f5f5f5] select-none">
-        <button type="button" id="track-menu-add-track" class="flex items-center gap-2 px-2.5 py-1.5 rounded bg-[#2e2e2e] hover:bg-[#383838] text-[#f5f5f5] transition-colors text-left font-medium cursor-pointer">
+    <div id="track-context-menu" class="hidden fixed z-50 bg-[#242424] border border-[#333333] rounded-md p-1.5 flex flex-col min-w-[150px] text-xs text-[#f5f5f5] select-none">
+        <button type="button" id="track-menu-add-track" class="flex items-center gap-2 px-2.5 py-1.5 rounded-t bg-[#2e2e2e] hover:bg-[#383838] text-[#f5f5f5] transition-colors text-left font-medium cursor-pointer">
             <i data-lucide="plus-circle" class="w-3.5 h-3.5 text-[#a3a3a3]"></i>
             <span>Add Track Below</span>
         </button>
-        <button type="button" id="track-menu-add-vfx-track" class="flex items-center gap-2 px-2.5 py-1.5 rounded bg-[#2e2e2e] hover:bg-[#383838] text-[#f5f5f5] transition-colors text-left font-medium cursor-pointer">
+        <button type="button" id="track-menu-add-vfx-track" class="flex items-center gap-2 px-2.5 py-1.5 rounded-b bg-[#2e2e2e] hover:bg-[#383838] text-[#f5f5f5] transition-colors text-left font-medium cursor-pointer">
             <i data-lucide="sparkles" class="w-3.5 h-3.5 text-[#a3a3a3]"></i>
             <span>Add VFX Track</span>
         </button>
@@ -563,6 +582,19 @@
             redoStack: []
         };
         window.appState = state;
+
+        // Ensure canvas re-renders with crisp Satoshi metrics once web fonts finish loading
+        if (document.fonts) {
+            Promise.all([
+                document.fonts.load('500 10px Satoshi'),
+                document.fonts.load('700 10px Satoshi'),
+                document.fonts.load('700 9.5px Satoshi'),
+                document.fonts.load('600 16px Satoshi'),
+                document.fonts.ready
+            ]).then(() => {
+                state.isDirty = true;
+            });
+        }
 
         function saveHistoryState() {
             // Push a deep copy of blocks to undo stack
@@ -1299,7 +1331,7 @@
                     }
                 } else if (!activeVideoImageBlock) {
                     previewCtx.fillStyle = '#666666';
-                    previewCtx.font = `${Math.max(12, Math.round(previewCanvas.height / 32))}px monospace`;
+                    previewCtx.font = `600 ${Math.max(12, Math.round(previewCanvas.height / 32))}px Satoshi, -apple-system, sans-serif`;
                     previewCtx.textAlign = 'center';
                     previewCtx.textBaseline = 'middle';
                     previewCtx.fillText('NO MEDIA AT PLAYHEAD', previewCanvas.width / 2, previewCanvas.height / 2);
@@ -1358,7 +1390,7 @@
             
             ctx.strokeStyle = tc.border;
             ctx.fillStyle = tc.textMuted;
-            ctx.font = '10px monospace';
+            ctx.font = '500 10px Satoshi, monospace';
             ctx.textBaseline = 'top';
             ctx.lineWidth = 1;
 
@@ -1431,7 +1463,7 @@
                 // Label (Mockup wave/thumbnail)
                 if (renderW > 30) {
                     ctx.fillStyle = tc.textMuted;
-                    ctx.font = '10px sans-serif';
+                    ctx.font = 'bold 10px Satoshi, sans-serif';
                     ctx.fillText(block.type.toUpperCase(), renderX + 8, y + 8);
                 }
             }
@@ -1461,7 +1493,7 @@
             }
 
             ctx.fillStyle = tc.playheadText;
-            ctx.font = 'bold 9.5px monospace';
+            ctx.font = '700 9.5px Satoshi, monospace';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
             ctx.fillText(timeBadgeStr, renderPlayheadX, 10);
@@ -2601,7 +2633,6 @@
                         <div id="project-tab" class="settings-tab-panel space-y-3">
                             <div class="border-b border-[var(--border-color)] pb-2.5">
                                 <h3 class="text-xs font-semibold text-[var(--text-main)] uppercase tracking-wider">Canvas & Dimensions</h3>
-                                <p class="text-[11px] text-[var(--text-muted)] mt-0.5">Control timeline resolution, frame rate and aspect ratio sizing.</p>
                             </div>
 
                             <!-- Standardized Vertical Menu List -->
@@ -2663,7 +2694,6 @@
                         <div id="export-tab" class="settings-tab-panel hidden space-y-3">
                             <div class="border-b border-[var(--border-color)] pb-2.5">
                                 <h3 class="text-xs font-semibold text-[var(--text-main)] uppercase tracking-wider">Export & Encoding</h3>
-                                <p class="text-[11px] text-[var(--text-muted)] mt-0.5">Specify video output container, encoding codec, and compression quality.</p>
                             </div>
 
                             <!-- Standardized Vertical Menu List -->
@@ -2733,7 +2763,6 @@
                         <div id="audio-tab" class="settings-tab-panel hidden space-y-3">
                             <div class="border-b border-[var(--border-color)] pb-2.5">
                                 <h3 class="text-xs font-semibold text-[var(--text-main)] uppercase tracking-wider">Audio Output</h3>
-                                <p class="text-[11px] text-[var(--text-muted)] mt-0.5">Configure audio stream inclusion, bitrate and sample rate frequency.</p>
                             </div>
 
                             <!-- Standardized Vertical Menu List -->
@@ -2780,7 +2809,6 @@
                         <div id="theme-tab" class="settings-tab-panel hidden space-y-3">
                             <div class="border-b border-[var(--border-color)] pb-2.5">
                                 <h3 class="text-xs font-semibold text-[var(--text-main)] uppercase tracking-wider">Appearance & Theme</h3>
-                                <p class="text-[11px] text-[var(--text-muted)] mt-0.5">Customize your editor workspace color scheme and visual atmosphere.</p>
                             </div>
 
                             <!-- Standardized Vertical Menu List -->
@@ -2828,7 +2856,6 @@
                         <div id="shortcuts-tab" class="settings-tab-panel hidden space-y-3">
                             <div class="border-b border-[var(--border-color)] pb-2.5">
                                 <h3 class="text-xs font-semibold text-[var(--text-main)] uppercase tracking-wider">Keyboard Shortcuts</h3>
-                                <p class="text-[11px] text-[var(--text-muted)] mt-0.5">Quick reference for essential editing keystrokes.</p>
                             </div>
 
                             <!-- Standardized Vertical Menu List -->

@@ -1,3 +1,49 @@
-body {
-    font-size: 15pt;
+@import "./fonts/fonts.css";
+
+:root {
+    --font-satoshi: 'Satoshi', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+}
+
+/* Set Satoshi as the default font family for the application */
+html, body {
+    font-family: var(--font-satoshi);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+}
+
+/* Ensure inputs, buttons, and form controls inherit Satoshi */
+button, input, select, textarea, optgroup {
+    font-family: inherit;
+}
+
+/* Font weight and style utilities */
+.font-satoshi {
+    font-family: var(--font-satoshi);
+}
+
+.font-satoshi-light {
+    font-family: 'Satoshi', sans-serif;
+    font-weight: 300;
+}
+
+.font-satoshi-regular {
+    font-family: 'Satoshi', sans-serif;
+    font-weight: 400;
+}
+
+.font-satoshi-medium {
+    font-family: 'Satoshi', sans-serif;
+    font-weight: 500;
+}
+
+.font-satoshi-bold {
+    font-family: 'Satoshi', sans-serif;
+    font-weight: 700;
+}
+
+.font-satoshi-black {
+    font-family: 'Satoshi', sans-serif;
+    font-weight: 900;
 }

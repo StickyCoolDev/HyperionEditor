@@ -76,6 +76,7 @@ document.addEventListener('DOMContentLoaded', () => {
             toast.style.padding = '12px 18px';
             toast.style.borderRadius = '8px';
             toast.style.border = '1px solid #444';
+            toast.style.fontFamily = "var(--font-satoshi, 'Satoshi', sans-serif)";
             toast.style.fontSize = '13px';
             toast.style.fontWeight = '500';
             toast.style.zIndex = '99999';
