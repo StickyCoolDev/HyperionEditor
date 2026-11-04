@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-white antialiased">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hyperion Editor - Community Forum</title>
+    <meta name="description" content="Community forum, discussions, troubleshooting, and feature voting for Hyperion Video Editor.">
+    
+    <!-- Satoshi Typography & Global Stylesheet -->
+    <link rel="preload" href="/fonts/Satoshi-Variable.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="stylesheet" href="/style.css">
+    
+    <!-- Alpine.js for Pines UI reactivity -->
+    <script defer src="https://unpkg.com/alpinejs@3.14.8/dist/cdn.min.js"></script>
+
+    <style>
+        /* Strict immutable white mode */
+        :root {
+            color-scheme: light;
+        }
+        body {
+            background-color: #ffffff !important;
+            color: #0f172a !important;
+            font-family: 'Satoshi', sans-serif;
+        }
+        /* Custom scrollbar matching neutral Pines aesthetic */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f5f5f5;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #d4d4d4;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #a3a3a3;
+        }
+    </style>
+</head>
+<body 
+    x-data="{
+        activeCategory: 'all',
+        searchQuery: '',
+        newModalOpen: false,
+        newPost: {
+            title: '',
+            category: 'Help & Troubleshooting',
+            author: 'You',
+            content: '',
+            tags: 'General'
+        },
+        discussions: [
+            {
+                id: 1,
+                title: 'Best export settings for 4K 60fps without WebAssembly memory overflow?',
+                category: 'Help & Troubleshooting',
+                author: 'Marcus Vance',
+                avatar: 'MV',
+                time: '2 hours ago',
+                replies: 14,
+                views: 184,
+                votes: 27,
+                hasVoted: false,
+                preview: 'Testing the +faststart flags and WebAssembly memory limits on Chromium. Wondering what chunk size prevents memory access out of bounds for timelines longer than 5 minutes.'
+            },
+            {
+                id: 2,
+                title: 'Proposal: Real-time audio waveform visualization on timeline audio tracks',
+                category: 'Feature Ideas',
+                author: 'Elena Rostova',
+                avatar: 'ER',
+                time: '5 hours ago',
+                replies: 38,
+                views: 420,
+                votes: 64,
+                hasVoted: false,
+                preview: 'Having peak waveforms directly rendered onto the canvas timeline blocks for A1 and A2 tracks would make dialogue cutting and beat-matching 10x faster.'
+            },
+            {
+                id: 3,
+                title: 'Showcase: 60-second product commercial reel rendered 100% in browser',
+                category: 'Showcase & Reels',
+                author: 'Devon Hayes',
+                avatar: 'DH',
+                time: '1 day ago',
+                replies: 19,
+                views: 512,
+                votes: 45,
+                hasVoted: false,
+                preview: 'Edited an entire client showcase with multi-track VFX, Gaussian blur transitions, and color grade keyframes. Export was blazing fast on M2 Chrome.'
+            },
+            {
+                id: 4,
+                title: 'Free Community Preset Pack: Cinematic Teal & Orange LUT emulation filters',
+                category: 'Presets & Templates',
+                author: 'Sarah Lin',
+                avatar: 'SL',
+                time: '2 days ago',
+                replies: 23,
+                views: 670,
+                votes: 89,
+                hasVoted: false,
+                preview: 'Shared parameter configurations for Hyperion VFX engine to reproduce 35mm film emulation using contrast, saturation, and sepia shader chaining.'
+            },
+            {
+                id: 5,
+                title: 'Cross-Origin Isolation troubleshooting guide for custom cloud deployments',
+                category: 'Help & Troubleshooting',
+                author: 'Alex Thorne',
+                avatar: 'AT',
+                time: '3 days ago',
+                replies: 8,
+                views: 295,
+                votes: 19,
+                hasVoted: false,
+                preview: 'Step-by-step checklist to configure COOP and COEP headers on Cloudflare Pages, AWS CloudFront, and Nginx reverse proxies.'
+            },
+            {
+                id: 6,
+                title: 'Feature Request: Keyboard shortcut customization panel and preset mapping',
+                category: 'Feature Ideas',
+                author: 'Kofi Mensah',
+                avatar: 'KM',
+                time: '4 days ago',
+                replies: 16,
+                views: 310,
+                votes: 34,
+                hasVoted: false,
+                preview: 'Allowing users to remap razor split (S) and shuttle controls (J/K/L) to match Premiere or DaVinci Resolve shortcuts would accelerate onboarding.'
+            }
+        ],
+        get filteredDiscussions() {
+            return this.discussions.filter(post => {
+                const matchesCat = this.activeCategory === 'all' || post.category === this.activeCategory;
+                const matchesSearch = !this.searchQuery.trim() || 
+                    post.title.toLowerCase().includes(this.searchQuery.toLowerCase()) || 
+                    post.preview.toLowerCase().includes(this.searchQuery.toLowerCase());
+                return matchesCat && matchesSearch;
+            });
+        },
+        toggleVote(post) {
+            if (post.hasVoted) {
+                post.votes--;
+                post.hasVoted = false;
+            } else {
+                post.votes++;
+                post.hasVoted = true;
+            }
+        },
+        createPost() {
+            if (!this.newPost.title.trim() || !this.newPost.content.trim()) return;
+            this.discussions.unshift({
+                id: Date.now(),
+                title: this.newPost.title.trim(),
+                category: this.newPost.category,
+                author: 'You',
+                avatar: 'ME',
+                time: 'Just now',
+                replies: 0,
+                views: 1,
+                votes: 1,
+                hasVoted: true,
+                preview: this.newPost.content.trim()
+            });
+            this.newPost.title = '';
+            this.newPost.content = '';
+            this.newModalOpen = false;
+        }
+    }"
+    class="min-h-full flex flex-col bg-white text-neutral-900"
+>
+
+    <!-- Top Navigation Header (3-Zone Contract: Brand, Nav Links, Action - No 'Back to Editor', No Theme Toggle) -->
+    <header class="h-14 w-full border-b border-neutral-200/80 bg-white/95 backdrop-blur-sm sticky top-0 z-30 px-4 sm:px-6">
+        <div class="max-w-7xl h-full mx-auto flex items-center justify-between gap-8">
+            
+            <!-- Zone 1: Brand Wordmark -->
+            <div class="flex items-center gap-3 shrink-0">
+                <a href="/" class="flex items-center gap-2.5 hover:opacity-90 transition-opacity">
+                    <div class="w-7 h-7 rounded-md bg-neutral-950 flex items-center justify-center text-white font-bold text-xs shadow-2xs">
+                        H
+                    </div>
+                    <span class="font-bold text-sm tracking-tight text-neutral-950 whitespace-nowrap">Hyperion Editor</span>
+                </a>
+                <span class="text-xs font-mono text-neutral-400">/ forum</span>
+            </div>
+
+            <!-- Zone 2: Navigation Links -->
+            <nav class="hidden md:flex items-center gap-6 text-xs font-medium text-neutral-600">
+                <a href="/docs/" class="text-neutral-600 hover:text-neutral-950 transition-colors whitespace-nowrap">Documentation</a>
+                <a href="/forum/" class="text-neutral-950 font-semibold tracking-wide whitespace-nowrap pb-0.5 border-b-2 border-neutral-950">Community Forum</a>
+                <a href="/#templates" class="text-neutral-600 hover:text-neutral-950 transition-colors whitespace-nowrap">Templates</a>
+                <a href="https://github.com" target="_blank" rel="noopener noreferrer" class="text-neutral-600 hover:text-neutral-950 transition-colors whitespace-nowrap">GitHub</a>
+            </nav>
+
+            <!-- Zone 3: Primary Action (Pines UI Primary Button - Start Discussion) -->
+            <div class="flex items-center gap-3 shrink-0">
+                <button 
+                    @click="newModalOpen = true"
+                    type="button"
+                    class="inline-flex items-center justify-center gap-1.5 px-3.5 py-1.5 text-xs font-medium tracking-wide text-white transition-colors duration-200 rounded-md bg-neutral-950 hover:bg-neutral-900 focus:ring-2 focus:ring-offset-2 focus:ring-neutral-900 focus:outline-none cursor-pointer shadow-2xs"
+                >
+                    <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    <span>New Discussion</span>
+                </button>
+            </div>
+
+        </div>
+    </header>
+
+    <!-- Main Forum Container -->
+    <div class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-8">
+        
+        <!-- Breadcrumbs & Header Section -->
+        <div class="mb-8">
+            <nav class="flex items-center gap-1.5 text-xs text-neutral-500 mb-3 font-medium">
+                <a href="/" class="hover:text-neutral-900 transition-colors">Hyperion</a>
+                <svg class="w-3.5 h-3.5 text-neutral-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+                <span class="text-neutral-900">Community Forum & Troubleshooting</span>
+            </nav>
+            <h1 class="text-2xl sm:text-3xl font-bold tracking-tight text-neutral-950">Community Discussions</h1>
+            <p class="text-sm text-neutral-500 max-w-2xl mt-1 leading-relaxed">
+                Connect with creators, ask technical rendering questions, share custom VFX presets, and propose new timeline tools.
+            </p>
+        </div>
+
+        <!-- Layout Grid: Main Discussions Feed + Right Sidebar -->
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-8 items-start">
+            
+            <!-- Left Main Column (3 Cols) -->
+            <div class="lg:col-span-3 space-y-6">
+                
+                <!-- Category Tabs & Search Bar (Pines UI Segmented Filter) -->
+                <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pb-4 border-b border-neutral-200/80">
+                    
+                    <!-- Channel Selector -->
+                    <div class="flex items-center gap-1 overflow-x-auto pb-1 sm:pb-0 text-xs font-medium">
+                        <button 
+                            @click="activeCategory = 'all'"
+                            type="button"
+                            class="px-3 py-1.5 rounded-md transition-colors whitespace-nowrap cursor-pointer"
+                            :class="activeCategory === 'all' ? 'bg-neutral-950 text-white font-semibold' : 'text-neutral-600 hover:text-neutral-950 hover:bg-neutral-100'"
+                        >
+                            All Channels
+                        </button>
+                        <button 
+                            @click="activeCategory = 'Help & Troubleshooting'"
+                            type="button"
+                            class="px-3 py-1.5 rounded-md transition-colors whitespace-nowrap cursor-pointer"
+                            :class="activeCategory === 'Help & Troubleshooting' ? 'bg-neutral-950 text-white font-semibold' : 'text-neutral-600 hover:text-neutral-950 hover:bg-neutral-100'"
+                        >
+                            Help & Troubleshooting
+                        </button>
+                        <button 
+                            @click="activeCategory = 'Feature Ideas'"
+                            type="button"
+                            class="px-3 py-1.5 rounded-md transition-colors whitespace-nowrap cursor-pointer"
+                            :class="activeCategory === 'Feature Ideas' ? 'bg-neutral-950 text-white font-semibold' : 'text-neutral-600 hover:text-neutral-950 hover:bg-neutral-100'"
+                        >
+                            Feature Ideas
+                        </button>
+                        <button 
+                            @click="activeCategory = 'Showcase & Reels'"
+                            type="button"
+                            class="px-3 py-1.5 rounded-md transition-colors whitespace-nowrap cursor-pointer"
+                            :class="activeCategory === 'Showcase & Reels' ? 'bg-neutral-950 text-white font-semibold' : 'text-neutral-600 hover:text-neutral-950 hover:bg-neutral-100'"
+                        >
+                            Showcase & Reels
+                        </button>
+                        <button 
+                            @click="activeCategory = 'Presets & Templates'"
+                            type="button"
+                            class="px-3 py-1.5 rounded-md transition-colors whitespace-nowrap cursor-pointer"
+                            :class="activeCategory === 'Presets & Templates' ? 'bg-neutral-950 text-white font-semibold' : 'text-neutral-600 hover:text-neutral-950 hover:bg-neutral-100'"
+                        >
+                            Presets & Templates
+                        </button>
+                    </div>
+
+                    <!-- Search Filter Input -->
+                    <div class="relative w-full sm:w-64 shrink-0">
+                        <svg class="w-3.5 h-3.5 text-neutral-400 absolute left-3 top-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                        <input 
+                            x-model="searchQuery" 
+                            type="text" 
+                            placeholder="Filter discussions..." 
+                            class="h-8.5 w-full pl-8 pr-3 text-xs bg-neutral-50 border border-neutral-200/80 rounded-md text-neutral-900 placeholder:text-neutral-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-neutral-900/10"
+                        >
+                    </div>
+
+                </div>
+
+                <!-- Discussion Items List (Pines UI Flat List with Hairline Borders) -->
+                <div class="border border-neutral-200/80 rounded-xl divide-y divide-neutral-200/70 overflow-hidden shadow-2xs bg-white">
+                    <template x-for="post in filteredDiscussions" :key="post.id">
+                        <article class="p-4 sm:p-5 hover:bg-neutral-50/70 transition-colors flex items-start gap-4 group">
+                            
+                            <!-- Upvote Trigger Box (Pines UI Neutral Button) -->
+                            <button 
+                                @click="toggleVote(post)"
+                                type="button"
+                                class="flex flex-col items-center justify-center w-11 py-1.5 rounded-lg border transition-colors cursor-pointer shrink-0"
+                                :class="post.hasVoted ? 'bg-neutral-950 text-white border-neutral-950' : 'bg-white text-neutral-600 border-neutral-200/80 hover:bg-neutral-100 hover:text-neutral-900'"
+                                title="Upvote discussion"
+                            >
+                                <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="18 15 12 9 6 15"/></svg>
+                                <span class="text-xs font-mono font-bold mt-0.5" x-text="post.votes"></span>
+                            </button>
+
+                            <!-- Discussion Content -->
+                            <div class="flex-1 min-w-0 space-y-1.5">
+                                <div class="flex items-center gap-2 flex-wrap">
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-neutral-100 text-neutral-700 border border-neutral-200/60" x-text="post.category"></span>
+                                    <span class="text-xs text-neutral-400">·</span>
+                                    <span class="text-xs text-neutral-500 font-medium" x-text="post.author"></span>
+                                    <span class="text-xs text-neutral-400">·</span>
+                                    <span class="text-xs text-neutral-400" x-text="post.time"></span>
+                                </div>
+
+                                <h2 class="text-sm font-semibold text-neutral-950 leading-snug group-hover:text-neutral-800">
+                                    <span x-text="post.title"></span>
+                                </h2>
+
+                                <p class="text-xs text-neutral-500 line-clamp-2 leading-relaxed" x-text="post.preview"></p>
+
+                                <!-- Unboxed Metadata Footer (Anti-Slop Compliance) -->
+                                <div class="flex items-center gap-4 pt-1 text-[11px] text-neutral-400 font-medium">
+                                    <span class="inline-flex items-center gap-1 text-neutral-500">
+                                        <svg class="w-3.5 h-3.5 text-neutral-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                                        <span x-text="post.replies"></span> replies
+                                    </span>
+                                    <span>·</span>
+                                    <span class="text-neutral-500">
+                                        <span x-text="post.views"></span> views
+                                    </span>
+                                </div>
+                            </div>
+
+                        </article>
+                    </template>
+
+                    <!-- Empty state -->
+                    <div x-show="filteredDiscussions.length === 0" class="p-12 text-center text-xs text-neutral-400 space-y-2">
+                        <svg class="w-8 h-8 mx-auto text-neutral-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+                        <p class="font-medium text-neutral-600">No discussions match your filter criteria.</p>
+                        <p>Try searching for a different keyword or post a new thread!</p>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Right Sidebar (1 Col) -->
+            <div class="space-y-6">
+                
+                <!-- Community Pinned Information Card -->
+                <div class="p-5 rounded-xl border border-neutral-200/80 bg-neutral-50/50 space-y-3">
+                    <div class="flex items-center gap-2">
+                        <div class="w-5 h-5 rounded bg-neutral-900 text-white flex items-center justify-center text-[10px] font-bold">
+                            !
+                        </div>
+                        <h3 class="text-xs font-bold text-neutral-900 uppercase tracking-wide">Community Guidelines</h3>
+                    </div>
+                    <ul class="text-xs text-neutral-600 space-y-2 leading-relaxed">
+                        <li>1. Provide browser version, OS, and video codec when asking troubleshooting questions.</li>
+                        <li>2. Search existing threads and check <a href="/docs/#troubleshooting-diagnostics" class="underline text-neutral-900 font-medium">docs/troubleshooting</a> before opening duplicate topics.</li>
+                        <li>3. Be respectful and constructive when giving feedback on community showcase reels.</li>
+                    </ul>
+                </div>
+
+                <!-- Channel Directory Card -->
+                <div class="p-5 rounded-xl border border-neutral-200/80 bg-white space-y-3">
+                    <h3 class="text-xs font-bold text-neutral-900 uppercase tracking-wide">Channel Overview</h3>
+                    <div class="space-y-2.5 text-xs">
+                        <div class="flex items-center justify-between text-neutral-600">
+                            <span>Help & Troubleshooting</span>
+                            <span class="font-mono text-neutral-400">12</span>
+                        </div>
+                        <div class="flex items-center justify-between text-neutral-600">
+                            <span>Feature Ideas & Voting</span>
+                            <span class="font-mono text-neutral-400">19</span>
+                        </div>
+                        <div class="flex items-center justify-between text-neutral-600">
+                            <span>Showcase & Community Reels</span>
+                            <span class="font-mono text-neutral-400">8</span>
+                        </div>
+                        <div class="flex items-center justify-between text-neutral-600">
+                            <span>Presets & Shader Packs</span>
+                            <span class="font-mono text-neutral-400">14</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Documentation Callout -->
+                <div class="p-5 rounded-xl border border-neutral-200/80 bg-neutral-50/30 space-y-2">
+                    <span class="text-xs font-semibold text-neutral-900">Looking for documentation?</span>
+                    <p class="text-xs text-neutral-500 leading-relaxed">
+                        Read full API specifications on timeline coordinate systems, Web Audio gain trees, and in-browser FFmpeg encoding.
+                    </p>
+                    <div class="pt-1">
+                        <a href="/docs/" class="inline-flex items-center gap-1 text-xs font-semibold text-neutral-900 hover:text-neutral-700 underline">
+                            <span>Read Hyperion Documentation</span>
+                            <span>→</span>
+                        </a>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- Pines UI "New Discussion" Modal Dialog (Alpine.js Dialog Modal Component) -->
+    <div 
+        x-show="newModalOpen" 
+        x-cloak 
+        class="relative z-50" 
+        aria-labelledby="modal-title" 
+        role="dialog" 
+        aria-modal="true"
+    >
+        <!-- Modal Backdrop -->
+        <div 
+            x-show="newModalOpen"
+            x-transition:enter="ease-out duration-200"
+            x-transition:enter-start="opacity-0"
+            x-transition:enter-end="opacity-100"
+            x-transition:leave="ease-in duration-150"
+            x-transition:leave-start="opacity-100"
+            x-transition:leave-end="opacity-0"
+            class="fixed inset-0 bg-neutral-950/40 backdrop-blur-xs transition-opacity"
+            @click="newModalOpen = false"
+        ></div>
+
+        <div class="fixed inset-0 z-10 w-screen overflow-y-auto p-4 sm:p-6 md:p-12">
+            <div 
+                x-show="newModalOpen"
+                x-transition:enter="ease-out duration-200"
+                x-transition:enter-start="opacity-0 scale-95"
+                x-transition:enter-end="opacity-100 scale-100"
+                x-transition:leave="ease-in duration-150"
+                x-transition:leave-start="opacity-100 scale-100"
+                x-transition:leave-end="opacity-0 scale-95"
+                class="mx-auto max-w-lg transform overflow-hidden rounded-xl bg-white p-6 shadow-2xl ring-1 ring-neutral-900/10 transition-all border border-neutral-200/80 space-y-4"
+                @click.outside="newModalOpen = false"
+            >
+                <div class="flex items-center justify-between pb-3 border-b border-neutral-100">
+                    <h3 class="text-sm font-bold text-neutral-950" id="modal-title">Start a New Discussion</h3>
+                    <button @click="newModalOpen = false" type="button" class="text-neutral-400 hover:text-neutral-700 p-1">
+                        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                    </button>
+                </div>
+
+                <form @submit.prevent="createPost" class="space-y-4 text-xs">
+                    <div>
+                        <label class="block text-neutral-700 font-semibold mb-1">Discussion Title</label>
+                        <input 
+                            x-model="newPost.title"
+                            type="text" 
+                            required 
+                            placeholder="e.g. How to keyframe Gaussian blur on clip split?"
+                            class="w-full px-3 py-2 border border-neutral-200/80 rounded-md text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-neutral-900/10"
+                        >
+                    </div>
+
+                    <div>
+                        <label class="block text-neutral-700 font-semibold mb-1">Channel</label>
+                        <select 
+                            x-model="newPost.category" 
+                            class="w-full px-3 py-2 border border-neutral-200/80 rounded-md text-neutral-900 bg-white focus:outline-none focus:ring-2 focus:ring-neutral-900/10"
+                        >
+                            <option value="Help & Troubleshooting">Help & Troubleshooting</option>
+                            <option value="Feature Ideas">Feature Ideas</option>
+                            <option value="Showcase & Reels">Showcase & Reels</option>
+                            <option value="Presets & Templates">Presets & Templates</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-neutral-700 font-semibold mb-1">Discussion Details</label>
+                        <textarea 
+                            x-model="newPost.content"
+                            rows="4" 
+                            required 
+                            placeholder="Describe your question, workflow, or suggestion in detail..."
+                            class="w-full px-3 py-2 border border-neutral-200/80 rounded-md text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-neutral-900/10"
+                        ></textarea>
+                    </div>
+
+                    <div class="flex items-center justify-end gap-2 pt-2 border-t border-neutral-100">
+                        <button 
+                            @click="newModalOpen = false" 
+                            type="button" 
+                            class="inline-flex items-center justify-center px-4 py-2 text-xs font-medium tracking-wide transition-colors duration-200 bg-white border rounded-md text-neutral-600 hover:text-neutral-900 border-neutral-200/70 hover:bg-neutral-100 active:bg-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-neutral-200/60 cursor-pointer"
+                        >
+                            Cancel
+                        </button>
+                        <button 
+                            type="submit" 
+                            class="inline-flex items-center justify-center px-4 py-2 text-xs font-medium tracking-wide text-white transition-colors duration-200 rounded-md bg-neutral-950 hover:bg-neutral-900 focus:ring-2 focus:ring-offset-2 focus:ring-neutral-900 focus:outline-none cursor-pointer"
+                        >
+                            Publish Discussion
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>

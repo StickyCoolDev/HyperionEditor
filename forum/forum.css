@@ -1,0 +1,77 @@
+@import "@picocss/pico/css/pico.min.css";
+@import "/fonts/fonts.css";
+
+:root {
+  --pico-font-family: 'Satoshi', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+body {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.forum-container {
+  flex: 1;
+}
+
+.forum-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.forum-stats {
+  display: flex;
+  gap: 1.5rem;
+}
+
+.forum-stat-box {
+  display: flex;
+  flex-direction: column;
+}
+
+.forum-stat-number {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--pico-primary);
+  line-height: 1.2;
+}
+
+.forum-stat-label {
+  font-size: 0.75rem;
+  color: var(--pico-muted-color);
+  text-transform: uppercase;
+}
+
+.thread-card {
+  margin-bottom: 1rem;
+}
+
+.thread-card header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+  padding-bottom: 0.5rem;
+  border-bottom: var(--pico-border-width) solid var(--pico-card-border-color);
+}
+
+.thread-tag {
+  font-size: 0.75rem;
+  padding: 0.2rem 0.6rem;
+  border-radius: var(--pico-border-radius);
+  background-color: var(--pico-dropdown-hover-background-color);
+  color: var(--pico-muted-color);
+}
+
+.thread-meta {
+  display: flex;
+  gap: 1rem;
+  font-size: 0.85rem;
+  color: var(--pico-muted-color);
+  margin-top: 0.75rem;
+}

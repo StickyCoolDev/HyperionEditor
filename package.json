@@ -3,12 +3,16 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "dev": "node server.js",
-    "build": "echo 'Build complete'",
-    "lint": "echo 'No lint errors'",
-    "start": "node server.js"
+    "dev": "vite --port=3000 --host=0.0.0.0",
+    "build": "vite build",
+    "lint": "echo 'No lint errors'"
   },
   "dependencies": {
-    "express": "^4.21.2"
+    "@picocss/pico": "^2.1.1",
+    "@tailwindcss/vite": "^4.0.9",
+    "alpinejs": "^3.17.5",
+    "markdown-it": "^15.0.3",
+    "tailwindcss": "^4.0.9",
+    "vite": "^6.2.0"
   }
 }

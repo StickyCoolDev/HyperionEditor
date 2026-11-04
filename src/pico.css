@@ -1,0 +1,234 @@
+@import "@picocss/pico/css/pico.min.css";
+
+/* Pico CSS Customizations for Hyperion Documentation & Forum */
+:root {
+  --pico-font-family: 'Satoshi', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --pico-border-radius: 0.5rem;
+}
+
+body {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+main.container {
+  flex: 1;
+}
+
+/* Nav Bar Styling */
+header.pico-header {
+  border-bottom: 1px solid var(--pico-muted-border-color);
+  padding-top: 0.75rem;
+  padding-bottom: 0.75rem;
+  margin-bottom: 1.5rem;
+  background: var(--pico-background-color);
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  backdrop-filter: blur(8px);
+}
+
+header.pico-header nav {
+  margin-bottom: 0;
+}
+
+.brand-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 700;
+  color: var(--pico-color);
+  text-decoration: none;
+}
+
+/* Documentation Layout */
+.docs-layout {
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  gap: 2.5rem;
+  align-items: start;
+}
+
+@media (max-width: 860px) {
+  .docs-layout {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+}
+
+.docs-sidebar {
+  position: sticky;
+  top: 5rem;
+  max-height: calc(100vh - 6rem);
+  overflow-y: auto;
+  padding-right: 1rem;
+}
+
+.docs-sidebar nav ul {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.25rem;
+  margin-bottom: 1.25rem;
+  padding-left: 0;
+  list-style: none;
+}
+
+.docs-sidebar nav a {
+  display: block;
+  padding: 0.45rem 0.75rem;
+  border-radius: var(--pico-border-radius);
+  color: var(--pico-muted-color);
+  text-decoration: none;
+  font-size: 0.9rem;
+  transition: all 0.15s ease;
+}
+
+.docs-sidebar nav a:hover,
+.docs-sidebar nav a.active {
+  color: var(--pico-color);
+  background: var(--pico-card-background-color);
+  text-decoration: none;
+}
+
+.docs-sidebar nav a.active {
+  border-left: 3px solid var(--pico-primary);
+  font-weight: 600;
+}
+
+.docs-sidebar h6 {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--pico-muted-color);
+  margin-bottom: 0.5rem;
+  margin-top: 1rem;
+}
+
+.docs-content {
+  min-width: 0;
+}
+
+.docs-content section {
+  margin-bottom: 3rem;
+  scroll-margin-top: 5rem;
+}
+
+/* Forum Layout & Components */
+.forum-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+  align-items: center;
+}
+
+.forum-tag-filter {
+  padding: 0.35rem 0.85rem;
+  font-size: 0.85rem;
+  cursor: pointer;
+  border-radius: 9999px;
+  background: transparent;
+  color: var(--pico-muted-color);
+  border: 1px solid var(--pico-muted-border-color);
+  margin: 0;
+  transition: all 0.15s ease;
+}
+
+.forum-tag-filter.active,
+.forum-tag-filter:hover {
+  background: var(--pico-primary-background);
+  color: var(--pico-primary-inverse);
+  border-color: var(--pico-primary-background);
+}
+
+.badge {
+  display: inline-block;
+  padding: 0.2rem 0.55rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border: 1px solid var(--pico-muted-border-color);
+  color: var(--pico-muted-color);
+}
+
+.badge-tech {
+  background: rgba(14, 165, 233, 0.15);
+  color: #38bdf8;
+  border-color: rgba(14, 165, 233, 0.3);
+}
+
+.badge-feature {
+  background: rgba(245, 158, 11, 0.15);
+  color: #fbbf24;
+  border-color: rgba(245, 158, 11, 0.3);
+}
+
+.badge-showcase {
+  background: rgba(16, 185, 129, 0.15);
+  color: #34d399;
+  border-color: rgba(16, 185, 129, 0.3);
+}
+
+article.forum-card {
+  margin-bottom: 1.25rem;
+  padding: 1.25rem;
+  border-radius: var(--pico-border-radius);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+article.forum-card:hover {
+  border-color: var(--pico-primary);
+}
+
+.thread-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.thread-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 1rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--pico-muted-border-color);
+  font-size: 0.85rem;
+  color: var(--pico-muted-color);
+}
+
+.vote-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.25rem 0.65rem;
+  font-size: 0.8rem;
+  margin: 0;
+  border-radius: 9999px;
+  cursor: pointer;
+  background: transparent;
+  border: 1px solid var(--pico-muted-border-color);
+  color: var(--pico-color);
+}
+
+.vote-btn:hover, .vote-btn.voted {
+  background: var(--pico-primary-background);
+  color: var(--pico-primary-inverse);
+  border-color: var(--pico-primary-background);
+}
+
+/* Back link */
+.btn-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem 0.85rem;
+  font-size: 0.85rem;
+  margin: 0;
+  text-decoration: none;
+}

@@ -1,4 +1,10 @@
+@import "tailwindcss";
 @import "./fonts/fonts.css";
+
+@theme {
+    --font-sans: 'Satoshi', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    --font-satoshi: 'Satoshi', sans-serif;
+}
 
 :root {
     --font-satoshi: 'Satoshi', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;

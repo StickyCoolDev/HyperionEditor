@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-white antialiased">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hyperion Editor - Documentation</title>
+    <meta name="description" content="Official documentation, architectural specifications, and technical guides for Hyperion Video Editor.">
+    
+    <!-- Satoshi Typography & Global Stylesheet -->
+    <link rel="preload" href="/fonts/Satoshi-Variable.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="stylesheet" href="/style.css">
+    
+    <!-- Alpine.js for Pines UI reactivity -->
+    <script defer src="https://unpkg.com/alpinejs@3.14.8/dist/cdn.min.js"></script>
+
+    <style>
+        /* Strict immutable white mode */
+        :root {
+            color-scheme: light;
+        }
+        body {
+            background-color: #ffffff !important;
+            color: #0f172a !important;
+            font-family: 'Satoshi', sans-serif;
+        }
+        /* Custom scrollbar matching neutral Pines aesthetic */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f5f5f5;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #d4d4d4;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #a3a3a3;
+        }
+    </style>
+</head>
+<body 
+    x-data="{ 
+        sidebarOpen: window.innerWidth > 1024,
+        searchOpen: false,
+        searchQuery: '',
+        activeHash: window.location.hash || '#getting-started',
+        docsIndex: window.__HYPERION_DOCS_INDEX__ || [],
+        get filteredResults() {
+            if (!this.searchQuery.trim()) return this.docsIndex.slice(0, 8);
+            const q = this.searchQuery.toLowerCase();
+            return this.docsIndex.filter(item => 
+                item.title.toLowerCase().includes(q) || 
+                (item.excerpt && item.excerpt.toLowerCase().includes(q)) ||
+                (item.category && item.category.toLowerCase().includes(q))
+            ).slice(0, 10);
+        }
+    }" 
+    @keydown.escape.window="searchOpen = false"
+    @keydown.meta.k.window.prevent="searchOpen = true; $nextTick(() => $refs.searchInput?.focus())"
+    @keydown.ctrl.k.window.prevent="searchOpen = true; $nextTick(() => $refs.searchInput?.focus())"
+    class="min-h-full flex flex-col bg-white text-neutral-900"
+>
+
+    <!-- Top Navigation Header (3-Zone Contract: Brand, Nav Links, Search Action - No 'Back to Editor', No Theme Toggle) -->
+    <header class="h-14 w-full border-b border-neutral-200/80 bg-white/95 backdrop-blur-sm sticky top-0 z-30 px-4 sm:px-6">
+        <div class="max-w-7xl h-full mx-auto flex items-center justify-between gap-8">
+            
+            <!-- Zone 1: Brand & Sidebar Toggle -->
+            <div class="flex items-center gap-3 shrink-0">
+                <button 
+                    @click="sidebarOpen = !sidebarOpen" 
+                    type="button" 
+                    class="p-1.5 rounded-md text-neutral-500 hover:text-neutral-900 hover:bg-neutral-100 transition-colors focus:outline-none focus:ring-2 focus:ring-neutral-200"
+                    title="Toggle sidebar navigation"
+                    aria-label="Toggle navigation menu"
+                >
+                    <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+                </button>
+
+                <a href="/" class="flex items-center gap-2.5 hover:opacity-90 transition-opacity">
+                    <div class="w-7 h-7 rounded-md bg-neutral-950 flex items-center justify-center text-white font-bold text-xs shadow-2xs">
+                        H
+                    </div>
+                    <span class="font-bold text-sm tracking-tight text-neutral-950 whitespace-nowrap">Hyperion Editor</span>
+                </a>
+                <span class="text-xs font-mono text-neutral-400">/ docs</span>
+            </div>
+
+            <!-- Zone 2: Navigation Links -->
+            <nav class="hidden md:flex items-center gap-6 text-xs font-medium text-neutral-600">
+                <a href="/docs/" class="text-neutral-950 font-semibold tracking-wide whitespace-nowrap pb-0.5 border-b-2 border-neutral-950">Documentation</a>
+                <a href="/forum/" class="text-neutral-600 hover:text-neutral-950 transition-colors whitespace-nowrap">Community Forum</a>
+                <a href="/#templates" class="text-neutral-600 hover:text-neutral-950 transition-colors whitespace-nowrap">Templates</a>
+                <a href="https://github.com" target="_blank" rel="noopener noreferrer" class="text-neutral-600 hover:text-neutral-950 transition-colors whitespace-nowrap">GitHub</a>
+            </nav>
+
+            <!-- Zone 3: Pines UI Quick Search Trigger (No Theme Toggle, No Back to Editor) -->
+            <div class="flex items-center gap-3 shrink-0">
+                <button 
+                    @click="searchOpen = true; $nextTick(() => $refs.searchInput?.focus())"
+                    type="button"
+                    class="inline-flex items-center gap-2 px-3 py-1.5 text-xs text-neutral-500 bg-neutral-50 hover:bg-neutral-100 border border-neutral-200/80 rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-neutral-900/10 cursor-pointer w-44 sm:w-56 justify-between"
+                >
+                    <span class="inline-flex items-center gap-1.5 truncate">
+                        <svg class="w-3.5 h-3.5 text-neutral-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                        <span>Search docs...</span>
+                    </span>
+                    <kbd class="hidden sm:inline-flex items-center gap-0.5 px-1.5 py-0.5 text-[10px] font-mono text-neutral-500 bg-white border border-neutral-200 rounded shadow-2xs">
+                        <span>⌘</span><span>K</span>
+                    </kbd>
+                </button>
+            </div>
+
+        </div>
+    </header>
+
+    <!-- Main Workspace Container -->
+    <div class="flex-1 max-w-7xl w-full mx-auto flex items-start">
+        
+        <!-- Left Collapsible Sidebar (DevDojo Pines UI Accordion & Navigation Structure) -->
+        <aside 
+            x-show="sidebarOpen"
+            x-transition:enter="transition ease-out duration-200"
+            x-transition:enter-start="-translate-x-full opacity-0"
+            x-transition:enter-end="translate-x-0 opacity-100"
+            x-transition:leave="transition ease-in duration-150"
+            x-transition:leave-start="translate-x-0 opacity-100"
+            x-transition:leave-end="-translate-x-full opacity-0"
+            class="w-64 sm:w-72 shrink-0 border-r border-neutral-200/80 bg-neutral-50/50 p-4 sm:p-6 sticky top-14 h-[calc(100vh-3.5rem)] overflow-y-auto"
+        >
+            <div class="mb-4 pb-3 border-b border-neutral-200/70 flex items-center justify-between">
+                <span class="text-[11px] font-bold uppercase tracking-wider text-neutral-400">Documentation Index</span>
+                <span class="text-[10px] font-mono text-neutral-400">v1.2 MPA</span>
+            </div>
+
+            <!-- Injected Sidebar Navigation from Markdown Plugin -->
+            <!-- SIDEBAR_NAV_INJECTION -->
+
+            <!-- Sidebar Community Box -->
+            <div class="mt-8 pt-4 border-t border-neutral-200/70 space-y-2">
+                <span class="text-[11px] font-semibold text-neutral-700">Need direct support?</span>
+                <p class="text-xs text-neutral-500 leading-relaxed">
+                    Join creators in the community forum to share presets and report issues.
+                </p>
+                <a 
+                    href="/forum/" 
+                    class="inline-flex items-center justify-center w-full px-3 py-1.5 text-xs font-medium text-neutral-900 bg-white border border-neutral-200/80 rounded-md hover:bg-neutral-100 transition-colors"
+                >
+                    Visit Community Forum →
+                </a>
+            </div>
+        </aside>
+
+        <!-- Main Documentation Content Pane -->
+        <main class="flex-1 min-w-0 p-6 sm:p-10 lg:px-12 max-w-4xl">
+            
+            <!-- Pines UI Breadcrumb Navigation -->
+            <nav class="flex items-center gap-1.5 text-xs text-neutral-500 mb-6 font-medium">
+                <a href="/" class="hover:text-neutral-900 transition-colors">Hyperion</a>
+                <svg class="w-3.5 h-3.5 text-neutral-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+                <a href="/docs/" class="hover:text-neutral-900 transition-colors">Docs</a>
+                <svg class="w-3.5 h-3.5 text-neutral-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+                <span class="text-neutral-900">Developer Reference</span>
+            </nav>
+
+            <!-- Injected Compile-Time Markdown Content -->
+            <!-- MARKDOWN_CONTENT_INJECTION -->
+
+            <!-- Document End Navigation Footer -->
+            <div class="mt-16 pt-8 border-t border-neutral-200/80 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-neutral-500">
+                <div class="flex items-center gap-2">
+                    <span>Hyperion Video Editor</span>
+                    <span>·</span>
+                    <span>Compiled statically at build time</span>
+                </div>
+                <div class="flex items-center gap-4">
+                    <a href="/forum/" class="text-neutral-700 hover:text-neutral-950 font-medium transition-colors">Join Community Forum</a>
+                    <a href="#getting-started" class="text-neutral-700 hover:text-neutral-950 font-medium transition-colors">Back to top ↑</a>
+                </div>
+            </div>
+
+        </main>
+
+        <!-- Right Quick Navigation Strip (Desktop TOC) -->
+        <div class="hidden xl:block w-56 shrink-0 py-10 pr-6 sticky top-14 h-[calc(100vh-3.5rem)] overflow-y-auto">
+            <h4 class="text-[11px] font-bold uppercase tracking-wider text-neutral-400 mb-3">Quick Navigation</h4>
+            <ul class="space-y-1.5 text-xs border-l border-neutral-200/70 pl-3">
+                <li><a href="#getting-started" class="text-neutral-600 hover:text-neutral-950 transition-colors block py-0.5">Getting Started</a></li>
+                <li><a href="#timeline-canvas-engine" class="text-neutral-600 hover:text-neutral-950 transition-colors block py-0.5">Timeline & Canvas</a></li>
+                <li><a href="#visual-effects-vfx-engine" class="text-neutral-600 hover:text-neutral-950 transition-colors block py-0.5">VFX Engine</a></li>
+                <li><a href="#audio-mixing-processing" class="text-neutral-600 hover:text-neutral-950 transition-colors block py-0.5">Audio Mixing</a></li>
+                <li><a href="#export-encoding-pipeline" class="text-neutral-600 hover:text-neutral-950 transition-colors block py-0.5">Export Pipeline</a></li>
+                <li><a href="#troubleshooting-diagnostics" class="text-neutral-600 hover:text-neutral-950 transition-colors block py-0.5">Troubleshooting</a></li>
+                <li><a href="#keyboard-shortcuts-reference" class="text-neutral-600 hover:text-neutral-950 transition-colors block py-0.5">Shortcuts Table</a></li>
+            </ul>
+        </div>
+
+    </div>
+
+    <!-- Pines UI Search Modal (Alpine.js Dialog Modal Component) -->
+    <div 
+        x-show="searchOpen" 
+        x-cloak 
+        class="relative z-50" 
+        aria-labelledby="modal-title" 
+        role="dialog" 
+        aria-modal="true"
+    >
+        <!-- Modal Backdrop -->
+        <div 
+            x-show="searchOpen"
+            x-transition:enter="ease-out duration-200"
+            x-transition:enter-start="opacity-0"
+            x-transition:enter-end="opacity-100"
+            x-transition:leave="ease-in duration-150"
+            x-transition:leave-start="opacity-100"
+            x-transition:leave-end="opacity-0"
+            class="fixed inset-0 bg-neutral-950/40 backdrop-blur-xs transition-opacity"
+            @click="searchOpen = false"
+        ></div>
+
+        <div class="fixed inset-0 z-10 w-screen overflow-y-auto p-4 sm:p-6 md:p-20">
+            <div 
+                x-show="searchOpen"
+                x-transition:enter="ease-out duration-200"
+                x-transition:enter-start="opacity-0 scale-95"
+                x-transition:enter-end="opacity-100 scale-100"
+                x-transition:leave="ease-in duration-150"
+                x-transition:leave-start="opacity-100 scale-100"
+                x-transition:leave-end="opacity-0 scale-95"
+                class="mx-auto max-w-xl transform divide-y divide-neutral-100 overflow-hidden rounded-xl bg-white shadow-2xl ring-1 ring-neutral-900/10 transition-all border border-neutral-200/80"
+                @click.outside="searchOpen = false"
+            >
+                <div class="relative flex items-center px-4 py-3">
+                    <svg class="w-4 h-4 text-neutral-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                    <input 
+                        x-ref="searchInput"
+                        x-model="searchQuery"
+                        type="text" 
+                        class="h-9 w-full border-0 bg-transparent pl-3 pr-4 text-xs text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:ring-0" 
+                        placeholder="Search documentation sections, topics, shortcuts..."
+                    >
+                    <button @click="searchOpen = false" class="text-neutral-400 hover:text-neutral-600 text-xs px-1.5 py-0.5 rounded border border-neutral-200">
+                        ESC
+                    </button>
+                </div>
+
+                <!-- Live Results -->
+                <div class="max-h-80 overflow-y-auto p-2 divide-y divide-neutral-50 text-xs">
+                    <template x-for="item in filteredResults" :key="item.id + item.title">
+                        <a 
+                            :href="'#' + item.id" 
+                            @click="searchOpen = false"
+                            class="flex flex-col p-2.5 rounded-lg hover:bg-neutral-50 transition-colors group cursor-pointer"
+                        >
+                            <div class="flex items-center justify-between">
+                                <span class="font-semibold text-neutral-900 group-hover:text-neutral-950" x-text="item.title"></span>
+                                <span class="text-[10px] font-mono text-neutral-400 uppercase tracking-wide" x-text="item.category"></span>
+                            </div>
+                            <p class="text-[11px] text-neutral-500 line-clamp-1 mt-0.5" x-text="item.excerpt"></p>
+                        </a>
+                    </template>
+                    <div x-show="filteredResults.length === 0" class="p-6 text-center text-xs text-neutral-400">
+                        No documentation matches found for "<span x-text="searchQuery"></span>".
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-between px-4 py-2 bg-neutral-50 text-[11px] text-neutral-400">
+                    <span>Navigate with keyboard or click to jump</span>
+                    <span class="font-mono">Pines UI Search</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>
