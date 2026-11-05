@@ -60,11 +60,12 @@ if (typeof window === 'undefined') {
                         coi.doReload();
                     });
                 } else if (coi.shouldRegister()) {
-                    const scriptUrl = document.currentScript ? document.currentScript.src : './coi-serviceworker.js';
+                    const defaultUrl = window.location.origin + '/coi-serviceworker.js';
+                    const scriptUrl = (document.currentScript && document.currentScript.src) ? document.currentScript.src : defaultUrl;
                     navigator.serviceWorker.register(scriptUrl).then(
                         (reg) => {
                             if (!coi.quiet) {
-                                console.log('COI Service Worker registered successfully');
+                                console.log('COI Service Worker registered successfully:', scriptUrl);
                             }
                             reg.addEventListener('updatefound', () => {
                                 coi.doReload();
@@ -74,6 +75,13 @@ if (typeof window === 'undefined') {
                             }
                         },
                         (err) => {
+                            // If registration fails, try hyphenated alternate: coi-service-worker.js
+                            const altUrl = scriptUrl.includes('coi-service-worker.js')
+                                ? scriptUrl.replace('coi-service-worker.js', 'coi-serviceworker.js')
+                                : scriptUrl.replace('coi-serviceworker.js', 'coi-service-worker.js');
+                            if (altUrl !== scriptUrl) {
+                                navigator.serviceWorker.register(altUrl).catch(() => {});
+                            }
                             if (!coi.quiet) {
                                 console.warn('COI Service Worker failed to register (cross-origin headers may rely on host):', err);
                             }
